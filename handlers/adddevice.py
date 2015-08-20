@@ -6,9 +6,11 @@ import logging
 
 import motor
 
+import basehandler
+
 from bson.objectid import ObjectId
 
-class AddDeviceHandler(tornado.web.RequestHandler):
+class AddDeviceHandler(basehandler.BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):

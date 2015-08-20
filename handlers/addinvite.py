@@ -8,7 +8,9 @@ import motor
 
 from bson.objectid import ObjectId
 
-class AddInviteHandler(tornado.web.RequestHandler):
+import basehandler
+
+class AddInviteHandler(basehandler.BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
@@ -24,6 +26,19 @@ class AddInviteHandler(tornado.web.RequestHandler):
             self.set_status(403)
             self.finish()
             return
+
+        group = yield coll.find_one({"_id":ObjectId(groupid)})
+        if not group:
+            logging.error("group %s does not exist" % groupid)
+            self.set_status(404)
+            self.finish()
+            return
+        else:
+            owner = group.get("owner", "")
+            if self.p_userid != owner:
+                self.set_status(403)
+                self.finish()
+                return
 
         invitee_numbers = []
         for item in invitees:

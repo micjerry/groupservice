@@ -50,6 +50,7 @@ class Application(tornado.web.Application):
                   (r"/group/mod/device/name", MarkDeviceHandler)
                  ]
         self.db = motor.MotorClient("mongodb://localhost:27017").group
+        self.userdb = motor.MotorClient("mongodb://localhost:27017").contact
         self.publish = publish
         tornado.web.Application.__init__(self, handlers, debug=True)
  

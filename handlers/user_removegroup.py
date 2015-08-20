@@ -6,11 +6,13 @@ import logging
 
 import motor
 
-class UserRemoveGroupHandler(tornado.web.RequestHandler):
+import basehandler
+
+class UserRemoveGroupHandler(basehandler.BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
-        coll = self.application.db.users
+        coll = self.application.userdb.users
         data = json.loads(self.request.body.decode("utf-8"))
         userid = data.get("userid", "")
         groupid = data.get("groupid", "")
@@ -19,6 +21,12 @@ class UserRemoveGroupHandler(tornado.web.RequestHandler):
 
         if not userid or not groupid:
             logging.error("invalid request")
+            self.set_status(403)
+            self.finish()
+            return
+
+        if self.p_userid != userid:
+            logging.error("no right")
             self.set_status(403)
             self.finish()
             return

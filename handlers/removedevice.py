@@ -8,7 +8,9 @@ import motor
 
 from bson.objectid import ObjectId
 
-class RemoveDeviceHandler(tornado.web.RequestHandler):
+import basehandler
+
+class RemoveDeviceHandler(basehandler.BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
@@ -22,6 +24,7 @@ class RemoveDeviceHandler(tornado.web.RequestHandler):
         if not groupid or not deviceid:
             logging.error("invalid request")
             self.set_status(403)
+            self.set_header("Reason-Phrase", "param error")
             self.finish()
             return
         

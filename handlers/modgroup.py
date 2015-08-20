@@ -8,7 +8,9 @@ import motor
 
 from bson.objectid import ObjectId
 
-class ModGroupHandler(tornado.web.RequestHandler):
+import basehandler
+
+class ModGroupHandler(basehandler.BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
@@ -29,6 +31,20 @@ class ModGroupHandler(tornado.web.RequestHandler):
             self.set_status(403)
             self.finish()
             return
+
+        group = yield coll.find_one({"_id":ObjectId(groupid)})
+        if not group:
+            logging.error("group not exist")
+            self.set_status(404)
+            self.finish()
+            return
+        else:
+            owner = group.get("owner", "")
+            if self.p_userid != owner:
+                logging.error("you are not the owner")
+                self.set_status(403)
+                self.finish()
+                return
 
         groupinfo = {}
 

@@ -8,7 +8,9 @@ import motor
 
 from bson.objectid import ObjectId
 
-class RealMemberHandler(tornado.web.RequestHandler):
+import basehandler
+
+class RealMemberHandler(basehandler.BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
@@ -22,6 +24,12 @@ class RealMemberHandler(tornado.web.RequestHandler):
 
         if not userid or not groupid:
             logging.error("invalid request")
+            self.set_status(403)
+            self.finish()
+            return
+
+        if self.p_userid != userid:
+            logging.error("you can not realname other user")
             self.set_status(403)
             self.finish()
             return

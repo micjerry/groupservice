@@ -7,16 +7,24 @@ import logging
 import motor
 from bson.objectid import ObjectId
 
-class ListGroupHandler(tornado.web.RequestHandler):
+import basehandler
+
+class ListGroupHandler(basehandler.BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
-        coll = self.application.db.users
+        coll = self.application.userdb.users
         groupcoll = self.application.db.groups
         data = json.loads(self.request.body.decode("utf-8"))
         userid = data.get("userid", "invalid")
 
         logging.info("begin to list group of user %s" % userid)
+
+        if self.p_userid != userid:
+            logging.error("forbiden you can not query other user")
+            self.set_status(403)
+            self.finish()
+            return
 
         user = yield coll.find_one({"id":userid})
         if user:

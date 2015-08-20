@@ -21,7 +21,7 @@ def prepare():
     appname_print = appname.replace(".py", "")
 
     # create log dir
-    log_path = dirname + "/log"
+    log_path = dirname + "log"
     if not os.path.exists(log_path):
         os.makedirs(log_path)
 

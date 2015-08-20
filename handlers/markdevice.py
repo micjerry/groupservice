@@ -8,7 +8,9 @@ import motor
 
 from bson.objectid import ObjectId
 
-class MarkDeviceHandler(tornado.web.RequestHandler):
+import basehandler
+
+class MarkDeviceHandler(basehandler.BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
@@ -28,6 +30,13 @@ class MarkDeviceHandler(tornado.web.RequestHandler):
         
         result = yield coll.find_one({"_id":ObjectId(groupid)})
         if result:
+            owner = result.get("owner", "")
+            if self.p_userid != owner:
+                logging.error("you are not the owner")
+                self.set_status(403)
+                self.finish()
+                return
+
             devices = result.get("devices", [])
             for device in devices:
                 if (device.get("id", "") == deviceid):

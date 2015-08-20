@@ -6,12 +6,14 @@ import logging
 
 import motor
 
-class AddGroupHandler(tornado.web.RequestHandler):
+import basehandler
+
+class AddGroupHandler(basehandler.BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
         coll = self.application.db.groups
-        usercoll = self.application.db.users
+        usercoll = self.application.userdb.users
         publish = self.application.publish
         data = json.loads(self.request.body.decode("utf-8"))
         groupname = data.get("name", "")
@@ -19,6 +21,12 @@ class AddGroupHandler(tornado.web.RequestHandler):
         invite = data.get("invite", "free")
 
         logging.info("begin to create group owner = %s, owner = %s, invite = %s" % (owner, groupname, invite))
+
+        if self.p_userid != owner:
+            logging.error("forbiden you can not create group for other user")
+            self.set_status(403)
+            self.finish()
+            return
 
         if not groupname:
             logging.error("invalid request")

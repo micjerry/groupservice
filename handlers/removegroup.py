@@ -7,11 +7,14 @@ import logging
 import motor
 from bson.objectid import ObjectId
 
-class RemoveGroupHandler(tornado.web.RequestHandler):
+import basehandler
+
+class RemoveGroupHandler(basehandler.BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
         coll = self.application.db.groups
+        usercoll = self.application.userdb.users
         publish = self.application.publish
         data = json.loads(self.request.body.decode("utf-8"))
         groupid = data.get("groupid", "invalid")
@@ -31,12 +34,19 @@ class RemoveGroupHandler(tornado.web.RequestHandler):
         if group:
             members = group.get("members", [])
             groupname = group.get("name", [])
+            owner = group.get("owner", "")
+
+            if self.p_userid != owner:
+                logging.error("no right")
+                self.set_status(403)
+                self.finish()
+                return
 
             #update every member delete 
             for item in members:
                 userid = item.get("id", "")
                 receivers.append(userid)
-                yield coll.find_and_modify({"id":userid}, {"$pull":{"groups":{"id":groupid}}})
+                yield usercoll.find_and_modify({"id":userid}, {"$pull":{"groups":{"id":groupid}}})
             
         else:
             logging.error("group %s does not exist" % groupid)

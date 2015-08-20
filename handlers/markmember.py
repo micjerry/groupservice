@@ -8,7 +8,9 @@ import motor
 
 from bson.objectid import ObjectId
 
-class MarkMemberHandler(tornado.web.RequestHandler):
+import basehandler
+
+class MarkMemberHandler(basehandler.BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
@@ -23,11 +25,21 @@ class MarkMemberHandler(tornado.web.RequestHandler):
         if not userid or not groupid:
             logging.error("invalid request")
             self.set_status(403)
+            self.set_header("Reason-Phrase", "param error")
             self.finish()
             return
         
+
         result = yield coll.find_one({"_id":ObjectId(groupid)})
         if result:
+            owner = result.get("owner", "")
+            if owner != self.p_userid:
+                logging.error("%s is not the owner" % owner)
+                self.set_status(403)
+                self.set_header("Reason-Phrase", "not the owner")
+                self.finish()
+                return
+
             members = result.get("members", [])
             for member in members:
                 if (member.get("id", "") == userid):

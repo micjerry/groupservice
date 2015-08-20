@@ -8,7 +8,9 @@ import motor
 
 from bson.objectid import ObjectId
 
-class RemoveMemberHandler(tornado.web.RequestHandler):
+import basehandler
+
+class RemoveMemberHandler(basehandler.BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
@@ -34,6 +36,13 @@ class RemoveMemberHandler(tornado.web.RequestHandler):
         if group:
             groupname = group.get("name", "")
             members = group.get("members", "")
+            owner = group.get("owner", "")
+
+            if self.p_userid != owner:
+                logging.error("no right")
+                self.set_status(403)
+                self.finish()
+                return
 
             for item in members:
                 receivers.append(item.get("id", ""))
