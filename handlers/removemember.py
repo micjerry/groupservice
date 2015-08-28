@@ -38,7 +38,7 @@ class RemoveMemberHandler(basehandler.BaseHandler):
             members = group.get("members", "")
             owner = group.get("owner", "")
 
-            if self.p_userid != owner:
+            if self.p_userid != owner and self.p_userid != userid:
                 logging.error("no right")
                 self.set_status(403)
                 self.finish()
