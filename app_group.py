@@ -29,7 +29,7 @@ from handlers.removedevice import RemoveDeviceHandler
 from handlers.markdevice import MarkDeviceHandler
 
 from tornado.options import define, options
-define("port", default=8088, help="run on the given port", type=int)
+define("port", default=8100, help="run on the given port", type=int)
 
 class Application(tornado.web.Application):
     def __init__(self):
