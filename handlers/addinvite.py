@@ -8,9 +8,9 @@ import motor
 
 from bson.objectid import ObjectId
 
-import basehandler
+from mickey.basehandler import BaseHandler
 
-class AddInviteHandler(basehandler.BaseHandler):
+class AddInviteHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):

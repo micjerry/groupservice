@@ -7,9 +7,9 @@ import logging
 import motor
 from bson.objectid import ObjectId
 
-import basehandler
+from mickey.basehandler import BaseHandler
 
-class ListGroupHandler(basehandler.BaseHandler):
+class ListGroupHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
@@ -39,6 +39,7 @@ class ListGroupHandler(basehandler.BaseHandler):
                         groupinfo = {}
                         groupinfo["id"] = groupid
                         groupinfo["name"] = group.get("name", "")
+                        groupinfo["invite"] = group.get("invite", "")
                         list_groups.append(groupinfo)
                 
             self.write({"groups": list_groups})

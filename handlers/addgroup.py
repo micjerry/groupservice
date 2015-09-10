@@ -6,9 +6,9 @@ import logging
 
 import motor
 
-import basehandler
+from mickey.basehandler import BaseHandler
 
-class AddGroupHandler(basehandler.BaseHandler):
+class AddGroupHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
@@ -41,6 +41,9 @@ class AddGroupHandler(basehandler.BaseHandler):
             return
         
         members = data.get("members", [])
+        member_ids = [x.get("id", "") for x in members]
+        if self.p_userid not in member_ids:
+            members.append({"id" : self.p_userid})
 
         groupinfo = {}
         groupinfo["name"] = groupname
@@ -66,9 +69,7 @@ class AddGroupHandler(basehandler.BaseHandler):
             self.write(result_rt)
     
             #notify all the members
-            receivers = []
-            for item in members:
-                receivers.append(item.get("id"))
+            receivers = list(filter(lambda x: x != self.p_userid, [x.get("id", "") for x in members]))
 
             notify = {}
             notify["name"] = "mx.group.group_invite"
@@ -76,7 +77,6 @@ class AddGroupHandler(basehandler.BaseHandler):
             notify["groupname"] = groupname
 
             publish.publish_multi(receivers, notify)
-            
             
         else:
             self.set_status(500)

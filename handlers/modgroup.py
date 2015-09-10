@@ -7,10 +7,9 @@ import logging
 import motor
 
 from bson.objectid import ObjectId
+from mickey.basehandler import BaseHandler
 
-import basehandler
-
-class ModGroupHandler(basehandler.BaseHandler):
+class ModGroupHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
@@ -40,7 +39,8 @@ class ModGroupHandler(basehandler.BaseHandler):
             return
         else:
             owner = group.get("owner", "")
-            if self.p_userid != owner:
+            invite = group.get("invite", "free")
+            if self.p_userid != owner and invite == "admin":
                 logging.error("you are not the owner")
                 self.set_status(403)
                 self.finish()
@@ -53,31 +53,19 @@ class ModGroupHandler(basehandler.BaseHandler):
 
         if owner:
             groupinfo["owner"] = owner
-
-        if invite:
-            if invite == "free" or invite == "admin":
-                groupinfo["invite"] = invite
-
         
         result = yield coll.update({"_id":ObjectId(groupid)}, {"$set":groupinfo})
 
         if result:
             self.set_status(200)
-            
-            # send notify
-            group = yield coll.find_one({"_id":ObjectId(groupid)})
+            receivers = [x.get("id", "") for x in group.get("members", [])]
 
-            if group:
-                members = group.get("members", [])
-                receivers = []
-                for item in members:
-                    receivers.append(item.get("id", ""))
+            notify = {}
+            notify["name"] = "mx.group.group_change"
+            notify["groupid"] = groupid
+            notify["action"] = "info_change"
 
-                notify = {}
-                notify["name"] = "mx.group.group_change"
-                notify["groupid"] = groupid
-
-                publish.publish_multi(receivers, notify)
+            publish.publish_multi(receivers, notify)
         else:
             logging.error("mod group failed")
             self.set_status(500)

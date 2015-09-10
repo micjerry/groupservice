@@ -7,10 +7,9 @@ import logging
 import motor
 
 from bson.objectid import ObjectId
+from mickey.basehandler import BaseHandler
 
-import basehandler
-
-class RemoveDeviceHandler(basehandler.BaseHandler):
+class RemoveDeviceHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):

@@ -8,10 +8,10 @@ import logging
 import motor
 
 from bson.objectid import ObjectId
+import mickey.userfetcher
+from mickey.basehandler import BaseHandler
 
-import basehandler
-
-class DisplayGroupHandler(basehandler.BaseHandler):
+class DisplayGroupHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
@@ -27,10 +27,9 @@ class DisplayGroupHandler(basehandler.BaseHandler):
         if result:
             groupinfo = {}
             groupinfo["groupid"] = groupid
-            members = result.get("members", [])
             rs_members = []
 
-            for item in members:
+            for item in result.get("members", []):
                 u_member = {}
                 u_id = item.get("id", "")
                 u_member["id"] = u_id
@@ -38,33 +37,16 @@ class DisplayGroupHandler(basehandler.BaseHandler):
                 u_member["realname"] = item.get("realname", "")
                 
                 # get user information
-                nickname = ""
-                name = ""
-                contact_info = []
-                c_type = "person"
+                c_info = yield mickey.userfetcher.getcontact(u_id)
 
-                httpclient = tornado.httpclient.AsyncHTTPClient()
-                url = "http://localhost:9080/cxf/security/contacts/%s" % u_id
+                if not c_info:
+                    logging.error("get user info failed %s" % u_id)
+                    continue
 
-                try:
-                    response = yield httpclient.fetch(url, None, method = "GET", headers = {}, body = None)
-
-                    if response.code != 200:
-                        logging.error("get user info failed userid = %s" % u_id)
-                    else:
-                        res_body = {}
-                        res_body = json.loads(response.body.decode("utf-8"))
-                        nickname = res_body.get("commName", "")
-                        contact_info = res_body.get("contactInfos", [])
-                        name = res_body.get("name", "")
-                        c_type = res_body.get("type", "")
-                except Exception as e:
-                    logging.error("invalid body received")
-
-                u_member["nickname"] = nickname
-                u_member["name"] = name
-                u_member["type"] = c_type
-                u_member["contactInfos"] = contact_info
+                u_member["nickname"] = c_info.get("commName", "")
+                u_member["name"] = c_info.get("name", "")
+                u_member["type"] = c_info.get("type", "PERSON")
+                u_member["contactInfos"] = c_info.get("contactInfos", [])
                 
                 rs_members.append(u_member)
 

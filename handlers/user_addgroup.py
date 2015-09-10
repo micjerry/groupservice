@@ -5,10 +5,9 @@ import io
 import logging
 
 import motor
+from mickey.basehandler import BaseHandler
 
-import basehandler
-
-class UserAddGroupHandler(basehandler.BaseHandler):
+class UserAddGroupHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):

@@ -7,10 +7,9 @@ import logging
 import motor
 
 from bson.objectid import ObjectId
+from mickey.basehandler import BaseHandler
 
-import basehandler
-
-class AddMemberHandler(basehandler.BaseHandler):
+class AddMemberHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
@@ -30,25 +29,19 @@ class AddMemberHandler(basehandler.BaseHandler):
         
         result = yield coll.find_one({"_id":ObjectId(groupid)})
 
-        # if add sucess we should send notify to members which already exist
-        old_receivers = []
-        is_member = False
-
         if not result:
             logging.error("group %s does not exist" % groupid)
             self.set_status(404)
             self.finish()
             return
-        else:
-            #get exist members
-            old_members = result.get("members", [])
-            for item in old_members:
-                m_id = item.get("id", "")
-                old_receivers.append(m_id)
-                if self.p_userid == m_id:
-                    is_member = True
 
-        if not is_member:
+        if result.get("invite", "free") == "admin":
+            return self.redirect("/group/authadd/members")
+
+        # if add sucess we should send notify to members which already exist
+        old_receivers = [x.get("id", "") for x in result.get("members", [])]
+
+        if not self.p_userid in old_receivers:
             logging.error("%s are not the member" % self.p_userid)
             self.set_status(403)
             self.finish()
@@ -56,13 +49,8 @@ class AddMemberHandler(basehandler.BaseHandler):
 
 
         # get members and the receivers
-        add_members = []
-        receivers = []
-        for item in members:
-            userid = item.get("id", "")
-            if userid and not userid in old_receivers:
-                add_members.append({"id": userid})
-                receivers.append(userid)
+        receivers = list(filter(lambda x: x not in old_receivers, [x.get("id", "") for x in members]))
+        add_members = [{"id":x} for x in receivers]
         
         result = yield coll.find_and_modify({"_id":ObjectId(groupid)}, {"$addToSet":{"members":{"$each": add_members}}})
 
@@ -80,6 +68,8 @@ class AddMemberHandler(basehandler.BaseHandler):
             notify_mod = {}
             notify_mod["name"] = "mx.group.group_change"
             notify_mod["groupid"] = groupid
+            notify_mod["action"] = "new_member"
+            notify_mod["members"] = add_members
 
             publish.publish_multi(old_receivers, notify_mod)
         else:

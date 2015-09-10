@@ -7,10 +7,9 @@ import logging
 import motor
 
 from bson.objectid import ObjectId
+from mickey.basehandler import BaseHandler
 
-import basehandler
-
-class RemoveMemberHandler(basehandler.BaseHandler):
+class RemoveMemberHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
@@ -35,7 +34,6 @@ class RemoveMemberHandler(basehandler.BaseHandler):
 
         if group:
             groupname = group.get("name", "")
-            members = group.get("members", "")
             owner = group.get("owner", "")
 
             if self.p_userid != owner and self.p_userid != userid:
@@ -44,8 +42,7 @@ class RemoveMemberHandler(basehandler.BaseHandler):
                 self.finish()
                 return
 
-            for item in members:
-                receivers.append(item.get("id", ""))
+            receivers = [x.get("id", "") for x in group.get("members", "")]
       
         else:
             self.set_status(404)
@@ -66,14 +63,6 @@ class RemoveMemberHandler(basehandler.BaseHandler):
             notify["groupid"] = groupid
             notify["groupname"] = groupname
             notify["userid"] = userid
-
-            #publish.publish_one(userid, notify)
-
-            #send notify to all user group changed
-            #notify_mod = {}
-            #notify_mod["name"] = "mx.group.group_change"
-            #notify_mod["groupid"] = groupid
-            #notify_mod["groupname"] = groupname
 
             publish.publish_multi(receivers, notify)
         else:

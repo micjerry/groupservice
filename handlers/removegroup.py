@@ -6,10 +6,9 @@ import logging
 
 import motor
 from bson.objectid import ObjectId
+from mickey.basehandler import BaseHandler
 
-import basehandler
-
-class RemoveGroupHandler(basehandler.BaseHandler):
+class RemoveGroupHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):

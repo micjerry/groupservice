@@ -5,12 +5,11 @@ import io
 import logging
 
 import motor
-
-import basehandler
+from mickey.basehandler import BaseHandler
 
 from bson.objectid import ObjectId
 
-class AddDeviceHandler(basehandler.BaseHandler):
+class AddDeviceHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):

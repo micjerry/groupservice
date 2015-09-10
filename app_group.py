@@ -1,4 +1,5 @@
 import os
+import sys
 
 import tornado.httpserver
 import tornado.ioloop
@@ -10,7 +11,9 @@ import logging.handlers
 
 import motor
 
-import publish
+import mickey.publish
+from mickey.daemon import Daemon
+import mickey.logutil
 
 from handlers.listgroup import ListGroupHandler
 from handlers.displaygroup import DisplayGroupHandler
@@ -27,9 +30,12 @@ from handlers.realmember import RealMemberHandler
 from handlers.adddevice import AddDeviceHandler
 from handlers.removedevice import RemoveDeviceHandler
 from handlers.markdevice import MarkDeviceHandler
+from handlers.authaddmember import AuthAddMemberHandler
+from handlers.acceptmember import AcceptMemberHandler
+from handlers.acceptinvite import AcceptInviteHandler
 
 from tornado.options import define, options
-define("port", default=8100, help="run on the given port", type=int)
+define("port", default=8088, help="run on the given port", type=int)
 
 class Application(tornado.web.Application):
     def __init__(self):
@@ -47,51 +53,42 @@ class Application(tornado.web.Application):
                   (r"/group/mod/realname", RealMemberHandler),
                   (r"/group/add/device", AddDeviceHandler),
                   (r"/group/remove/device", RemoveDeviceHandler),
-                  (r"/group/mod/device/name", MarkDeviceHandler)
+                  (r"/group/mod/device/name", MarkDeviceHandler),
+                  (r"/group/authadd/members", AuthAddMemberHandler),
+                  (r"/group/accept/invitation", AcceptInviteHandler),
+                  (r"/group/approve/newmember", AcceptMemberHandler)
                  ]
         self.db = motor.MotorClient("mongodb://localhost:27017").group
         self.userdb = motor.MotorClient("mongodb://localhost:27017").contact
-        self.publish = publish
+        self.publish = mickey.publish
         tornado.web.Application.__init__(self, handlers, debug=True)
  
-def setuplog():
-    ROOT = os.path.dirname(os.path.abspath(__file__))
-    path = lambda *a:os.path.join(ROOT, *a)
 
-    #setup access log
-    access_log = logging.getLogger("tornado.access")
-    access_log.setLevel(logging.DEBUG)
-    accessHandler = logging.handlers.RotatingFileHandler(
-      path('log/access.log'), maxBytes=50000000, backupCount=5)
-    access_log.addHandler(accessHandler)
+class MickeyDamon(Daemon):
+    def run(self):
+        tornado.options.parse_command_line()
+        mickey.logutil.setuplog()
+        http_server = tornado.httpserver.HTTPServer(Application())
+        http_server.listen(options.port)
+        tornado.ioloop.IOLoop.instance().start()
 
-    #setup app log
-    app_log = logging.getLogger("tornado.application")
-    app_log.setLevel(logging.DEBUG)
-    appHandler = logging.handlers.RotatingFileHandler(
-      path('log/app.log'),  maxBytes=50000000, backupCount=5)
-    app_log.addHandler(appHandler)
-
-    #setup gen log
-    gen_log = logging.getLogger("tornado.general")
-    gen_log.setLevel(logging.DEBUG)
-    genHandler = logging.handlers.RotatingFileHandler(
-      path('log/gen.log'),  maxBytes=50000000, backupCount=5)
-    gen_log.addHandler(genHandler)
-
-    #setup service log
-    service_log = logging.getLogger('')
-    service_log.setLevel(logging.DEBUG)
-    serviceHandler = logging.handlers.RotatingFileHandler(
-      path('log/service.log'),  maxBytes=50000000, backupCount=5)
-    formatter = logging.Formatter('%(pathname)s %(filename)s %(funcName)s %(lineno)d %(asctime)s %(levelname)s %(message)s')
-    serviceHandler.setFormatter(formatter)
-    service_log.addHandler(serviceHandler)
+    def errorcmd(self):
+        print("unkown command")
  
+def micmain():
+    if len(sys.argv) < 2:
+        print("invalid command")
+        return
+
+    pid_file_name = "/var/run/" + sys.argv[0].replace(".py", ".pid")
+    miceydamon = MickeyDamon(pid_file_name)
+    handler = {}
+    handler["start"] = miceydamon.start
+    handler["stop"] = miceydamon.stop
+    handler["restart"] = miceydamon.restart
+    handler["run"] = miceydamon.run
+
+    return handler.get(sys.argv[1],miceydamon.errorcmd)()
+
 if __name__ == "__main__":
-    tornado.options.parse_command_line()
-    setuplog()
-    
-    http_server = tornado.httpserver.HTTPServer(Application())
-    http_server.listen(options.port)
-    tornado.ioloop.IOLoop.instance().start()
+    micmain()
