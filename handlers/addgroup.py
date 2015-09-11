@@ -28,12 +28,6 @@ class AddGroupHandler(BaseHandler):
             self.finish()
             return
 
-        if not groupname:
-            logging.error("invalid request")
-            self.set_status(403)
-            self.finish()
-            return
-
         if (invite.lower() != "free") and (invite.lower() != "admin"):
             logging.error("invalid invite type %s" % invite)
             self.set_status(403)
