@@ -1,6 +1,8 @@
 import os
 import sys
 
+sys.path.append('/opt/webapps/libs')
+
 import tornado.httpserver
 import tornado.ioloop
 import tornado.web
@@ -35,16 +37,16 @@ from handlers.acceptmember import AcceptMemberHandler
 from handlers.acceptinvite import AcceptInviteHandler
 
 from tornado.options import define, options
-define("port", default=8088, help="run on the given port", type=int)
+define("port", default=8100, help="run on the given port", type=int)
 
 class Application(tornado.web.Application):
     def __init__(self):
-        handlers=[(r"/user/list/groups", ListGroupHandler),
+        handlers=[(r"/group/user/list/groups", ListGroupHandler),
                   (r"/group/display/detail", DisplayGroupHandler),
                   (r"/group/create/group", AddGroupHandler),
                   (r"/group/dismiss/group", RemoveGroupHandler),
-                  (r"/user/add/group", UserAddGroupHandler),
-                  (r"/user/remove/group", UserRemoveGroupHandler),
+                  (r"/group/user/add/group", UserAddGroupHandler),
+                  (r"/group/user/remove/group", UserRemoveGroupHandler),
                   (r"/group/mod/group", ModGroupHandler),
                   (r"/group/add/members", AddMemberHandler),
                   (r"/group/remove/member", RemoveMemberHandler),
