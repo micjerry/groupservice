@@ -5,8 +5,13 @@ import io
 import logging
 
 import motor
+import uuid
 
 from mickey.basehandler import BaseHandler
+
+_garbage = ""
+for i in range(50):
+    _garbage += "this only to occupy the space for user, avoid mongo to  move the data when it get bigger. "
 
 class AddGroupHandler(BaseHandler):
     @tornado.web.asynchronous
@@ -19,6 +24,7 @@ class AddGroupHandler(BaseHandler):
         groupname = data.get("name", "")
         owner = data.get("owner", "")
         invite = data.get("invite", "free")
+        change_flag  = str(uuid.uuid4()).replace('-', '_')
 
         logging.info("begin to create group owner = %s, owner = %s, invite = %s" % (owner, groupname, invite))
 
@@ -43,32 +49,49 @@ class AddGroupHandler(BaseHandler):
         groupinfo["name"] = groupname
         groupinfo["owner"] = owner
         groupinfo["invite"] = invite
-        groupinfo["members"] = members
+
+        if invite == "admin":
+            member_ids.remove(self.p_userid)
+            groupinfo["appendings"] = member_ids
+            groupinfo["members"] = [{"id":self.p_userid}]
+        else:
+            groupinfo["members"] = members
+
+        groupinfo["garbage"] = _garbage
         
         result = yield coll.insert(groupinfo)
 
         if result:
             result_rt = {}
             groupid = str(result)
+            result_rt["members"] = groupinfo.get("members", [])
+            result_rt["appendings"] = groupinfo.get("appendings", [])
             result_rt["groupid"] = groupid
             result_rt["name"] = groupname
             result_rt["owner"] = owner
             result_rt["invite"] = invite
-            result_rt["members"] = members
 
             if owner:
-                yield usercoll.find_and_modify({"id":owner}, {"$push":{"groups":{"id":groupid}}})
+                yield usercoll.find_and_modify({"id":owner}, 
+                                               {
+                                                 "$push":{"groups":{"id":groupid}},
+                                                 "$set": {"flag":change_flag},
+                                                 "$unset": {"garbage": 1}
+                                               })
 
             self.set_status(200)
             self.write(result_rt)
     
             #notify all the members
             receivers = list(filter(lambda x: x != self.p_userid, [x.get("id", "") for x in members]))
-
             notify = {}
-            notify["name"] = "mx.group.group_invite"
-            notify["groupid"] = str(result)
+            if invite == "admin":
+                notify["name"] = "mx.group.authgroup_invited"
+            else:
+                notify["name"] = "mx.group.group_invite"
+
             notify["groupname"] = groupname
+            notify["groupid"] = groupid
 
             publish.publish_multi(receivers, notify)
             

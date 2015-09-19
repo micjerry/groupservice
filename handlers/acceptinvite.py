@@ -5,6 +5,7 @@ import io
 import logging
 
 import motor
+import uuid
 
 from bson.objectid import ObjectId
 
@@ -15,9 +16,11 @@ class AcceptInviteHandler(BaseHandler):
     @tornado.gen.coroutine
     def post(self):
         coll = self.application.db.groups
+        usercoll = self.application.userdb.users
         publish = self.application.publish
         data = json.loads(self.request.body.decode("utf-8"))
         groupid = data.get("groupid", "")
+        change_flag  = str(uuid.uuid4()).replace('-', '_')
 
         logging.info("begin to add members to group %s" % groupid)
 
@@ -50,26 +53,22 @@ class AcceptInviteHandler(BaseHandler):
         new_appendings = list(filter(lambda x: x!= self.p_userid, appendings))
 
         #add member
-        modresult = yield coll.find_and_modify({"_id":ObjectId(groupid)}, {"$push":{"members":{"id":self.p_userid}}})
+        modresult = yield coll.find_and_modify({"_id":ObjectId(groupid)}, 
+                                               {
+                                                 "$push":{"members":{"id":self.p_userid}},
+                                                 "$pull":{"appendings":self.p_userid},
+                                                 "$unset": {"garbage": 1}
+                                               })
 
-        if not modresult:
+        user_rst = yield usercoll.find_and_modify({"id":self.p_userid},
+                                                  {
+                                                    "$push":{"groups":{"id": groupid}},
+                                                    "$set": {"flag":change_flag},
+                                                    "$unset": {"garbage": 1}
+                                                  }
+                                                 )
+        if not modresult or not user_rst:
             logging.error("add %s to members failed" % self.p_userid)
-            self.set_status(500)
-            self.finish()
-            return
-
-        #remove from appendings
-        modresult = yield coll.find_and_modify(
-                           {"_id": ObjectId(groupid)},
-                           {"$set":
-                              {
-                               "appendings":new_appendings
-                              }
-                           }
-                       )
-
-        if not modresult:
-            logging.error("remove %s from appendings failed" % self.p_userid)
             self.set_status(500)
             self.finish()
             return

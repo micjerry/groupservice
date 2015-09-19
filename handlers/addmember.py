@@ -52,7 +52,11 @@ class AddMemberHandler(BaseHandler):
         receivers = list(filter(lambda x: x not in old_receivers, [x.get("id", "") for x in members]))
         add_members = [{"id":x} for x in receivers]
         
-        result = yield coll.find_and_modify({"_id":ObjectId(groupid)}, {"$addToSet":{"members":{"$each": add_members}}})
+        result = yield coll.find_and_modify({"_id":ObjectId(groupid)}, 
+                                            {
+                                              "$addToSet":{"members":{"$each": add_members}},
+                                              "$unset": {"garbage": 1}
+                                            })
 
         if result:
             self.set_status(200)

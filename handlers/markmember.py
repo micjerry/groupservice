@@ -32,8 +32,8 @@ class MarkMemberHandler(BaseHandler):
         result = yield coll.find_one({"_id":ObjectId(groupid)})
         if result:
             owner = result.get("owner", "")
-            if owner != self.p_userid:
-                logging.error("%s is not the owner" % owner)
+            if owner != self.p_userid and self.p_userid != userid:
+                logging.error("%s is not the owner" % self.p_userid)
                 self.set_status(403)
                 self.set_header("Reason-Phrase", "not the owner")
                 self.finish()
@@ -45,14 +45,11 @@ class MarkMemberHandler(BaseHandler):
                     member["remark"] = remark
                     break
 
-            modresult = yield coll.find_and_modify(
-                           {"_id": ObjectId(groupid)},
-                           {"$set":
-                              {
-                               "members":members
-                              }
-                           }
-                       )
+            modresult = yield coll.find_and_modify({"_id": ObjectId(groupid)},
+                                                   {
+                                                     "$set":{"members":members},
+                                                     "$unset": {"garbage": 1}
+                                                   })
 
             if modresult:
                 self.set_status(200)

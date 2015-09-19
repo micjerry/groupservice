@@ -5,6 +5,7 @@ import io
 import logging
 
 import motor
+import uuid
 
 from bson.objectid import ObjectId
 from mickey.basehandler import BaseHandler
@@ -14,11 +15,12 @@ class RemoveMemberHandler(BaseHandler):
     @tornado.gen.coroutine
     def post(self):
         coll = self.application.db.groups
-        usercoll = self.application.db.users
+        usercoll = self.application.userdb.users
         publish = self.application.publish
         data = json.loads(self.request.body.decode("utf-8"))
         groupid = data.get("groupid", "")
         userid = data.get("userid", "")
+        change_flag  = str(uuid.uuid4()).replace('-', '_')
 
         logging.info("begin to remove member %s from group %s" % (userid, groupid))
 
@@ -42,6 +44,13 @@ class RemoveMemberHandler(BaseHandler):
                 self.finish()
                 return
 
+            # the owner can not quit
+            if self.p_userid == owner and self.p_userid == userid:
+                logging.error("the owner cannot quit, you can dismiss")
+                self.set_status(403)
+                self.finish()
+                return
+
             receivers = [x.get("id", "") for x in group.get("members", "")]
       
         else:
@@ -49,10 +58,19 @@ class RemoveMemberHandler(BaseHandler):
             self.finish()
             return
         
-        result = yield coll.find_and_modify({"_id":ObjectId(groupid)}, {"$pull":{"members":{"id":userid}}})
+        result = yield coll.find_and_modify({"_id":ObjectId(groupid)}, 
+                                            {
+                                              "$pull":{"members":{"id":userid}},
+                                              "$unset": {"garbage": 1}
+                                            })
 
         # remove group from the user's group list
-        yield usercoll.find_and_modify({"id":userid}, {"$pull":{"groups":{"id":groupid}}})
+        yield usercoll.find_and_modify({"id":userid}, 
+                                       {
+                                         "$pull":{"groups":{"id":groupid}},
+                                         "$set": {"flag":change_flag},
+                                         "$unset": {"garbage": 1}
+                                       })
 
         if result:
             self.set_status(200)

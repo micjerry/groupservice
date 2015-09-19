@@ -54,7 +54,11 @@ class ModGroupHandler(BaseHandler):
         if owner:
             groupinfo["owner"] = owner
         
-        result = yield coll.update({"_id":ObjectId(groupid)}, {"$set":groupinfo})
+        result = yield coll.update({"_id":ObjectId(groupid)}, 
+                                   {
+                                     "$set":groupinfo,
+                                     "$unset": {"garbage": 1}
+                                   })
 
         if result:
             self.set_status(200)
