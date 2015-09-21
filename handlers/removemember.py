@@ -5,7 +5,6 @@ import io
 import logging
 
 import motor
-import uuid
 
 from bson.objectid import ObjectId
 from mickey.basehandler import BaseHandler
@@ -20,7 +19,6 @@ class RemoveMemberHandler(BaseHandler):
         data = json.loads(self.request.body.decode("utf-8"))
         groupid = data.get("groupid", "")
         userid = data.get("userid", "")
-        change_flag  = str(uuid.uuid4()).replace('-', '_')
 
         logging.info("begin to remove member %s from group %s" % (userid, groupid))
 
@@ -68,7 +66,6 @@ class RemoveMemberHandler(BaseHandler):
         yield usercoll.find_and_modify({"id":userid}, 
                                        {
                                          "$pull":{"groups":{"id":groupid}},
-                                         "$set": {"flag":change_flag},
                                          "$unset": {"garbage": 1}
                                        })
 

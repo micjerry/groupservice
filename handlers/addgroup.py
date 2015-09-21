@@ -5,7 +5,6 @@ import io
 import logging
 
 import motor
-import uuid
 
 from mickey.basehandler import BaseHandler
 
@@ -24,7 +23,6 @@ class AddGroupHandler(BaseHandler):
         groupname = data.get("name", "")
         owner = data.get("owner", "")
         invite = data.get("invite", "free")
-        change_flag  = str(uuid.uuid4()).replace('-', '_')
 
         logging.info("begin to create group owner = %s, owner = %s, invite = %s" % (owner, groupname, invite))
 
@@ -75,7 +73,6 @@ class AddGroupHandler(BaseHandler):
                 yield usercoll.find_and_modify({"id":owner}, 
                                                {
                                                  "$push":{"groups":{"id":groupid}},
-                                                 "$set": {"flag":change_flag},
                                                  "$unset": {"garbage": 1}
                                                })
 

@@ -5,7 +5,6 @@ import io
 import logging
 
 import motor
-import uuid
 from mickey.basehandler import BaseHandler
 
 class UserAddGroupHandler(BaseHandler):
@@ -16,7 +15,6 @@ class UserAddGroupHandler(BaseHandler):
         data = json.loads(self.request.body.decode("utf-8"))
         userid = data.get("userid", "")
         groupid = data.get("groupid", "")
-        change_flag  = str(uuid.uuid4()).replace('-', '_')
 
         logging.info("user %s begin to add group %s" % (userid, groupid))
         if not userid or not groupid:
@@ -34,7 +32,6 @@ class UserAddGroupHandler(BaseHandler):
         result = yield coll.find_and_modify({"id":userid}, 
                                             {
                                               "$push":{"groups":{"id":groupid}},
-                                              "$set": {"flag":change_flag},
                                               "$unset": {"garbage": 1}
                                             })
 

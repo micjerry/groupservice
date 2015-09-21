@@ -5,7 +5,6 @@ import io
 import logging
 
 import motor
-import uuid
 from bson.objectid import ObjectId
 from mickey.basehandler import BaseHandler
 
@@ -18,7 +17,6 @@ class RemoveGroupHandler(BaseHandler):
         publish = self.application.publish
         data = json.loads(self.request.body.decode("utf-8"))
         groupid = data.get("groupid", "invalid")
-        change_flag  = str(uuid.uuid4()).replace('-', '_')
         
         logging.info("begin to remove group %s" % groupid)
 
@@ -49,8 +47,7 @@ class RemoveGroupHandler(BaseHandler):
                 receivers.append(userid)
                 yield usercoll.find_and_modify({"id":userid}, 
                                                {
-                                                 "$pull":{"groups":{"id":groupid}},
-                                                 "$set": {"flag":change_flag}
+                                                 "$pull":{"groups":{"id":groupid}}
                                                })
             
         else:

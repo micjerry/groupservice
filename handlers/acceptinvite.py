@@ -5,7 +5,6 @@ import io
 import logging
 
 import motor
-import uuid
 
 from bson.objectid import ObjectId
 
@@ -20,7 +19,6 @@ class AcceptInviteHandler(BaseHandler):
         publish = self.application.publish
         data = json.loads(self.request.body.decode("utf-8"))
         groupid = data.get("groupid", "")
-        change_flag  = str(uuid.uuid4()).replace('-', '_')
 
         logging.info("begin to add members to group %s" % groupid)
 
@@ -63,7 +61,6 @@ class AcceptInviteHandler(BaseHandler):
         user_rst = yield usercoll.find_and_modify({"id":self.p_userid},
                                                   {
                                                     "$push":{"groups":{"id": groupid}},
-                                                    "$set": {"flag":change_flag},
                                                     "$unset": {"garbage": 1}
                                                   }
                                                  )
