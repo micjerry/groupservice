@@ -63,6 +63,7 @@ class RemoveGroupHandler(BaseHandler):
             #send notify all the members
             notify = {}
             notify["name"] = "mx.group.group_dismiss"
+            notify["nty_type"] = "app"
             notify["groupid"] = groupid
             notify["groupname"] = groupname
 

@@ -18,6 +18,7 @@ class AcceptMemberHandler(BaseHandler):
         publish = self.application.publish
         data = json.loads(self.request.body.decode("utf-8"))
         groupid = data.get("groupid", "")
+        inviteid = data.get("invite_id", self.p_userid)
         members = data.get("members", [])
 
         logging.info("begin to add members to group %s" % groupid)
@@ -50,17 +51,21 @@ class AcceptMemberHandler(BaseHandler):
 
         notify = {}
         notify["name"] = "mx.group.authgroup_invited"
+        notify["nty_type"] = "device"
+        notify["msg_type"] = "other"
         notify["groupid"] = groupid
         notify["groupname"] = result.get("name", "")
-        opter_info = yield mickey.userfetcher.getcontact(self.p_userid)
+        notify["userid"] = inviteid
+        opter_info = yield mickey.userfetcher.getcontact(inviteid)
         if opter_info:
             notify["username"] = opter_info.get("name", "")
         else:
-            logging.error("get user info failed %s" % self.p_userid)
+            logging.error("get user info failed %s" % inviteid)
 
         append_result = yield coll.find_and_modify({"_id":ObjectId(groupid)}, {"$addToSet":{"appendings":{"$each": add_members}}})
         if append_result:
             self.set_status(200)
+            
             publish.publish_multi(add_members, notify)
         else:
             self.set_status(500)

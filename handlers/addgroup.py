@@ -87,6 +87,8 @@ class AddGroupHandler(BaseHandler):
             else:
                 notify["name"] = "mx.group.group_invite"
 
+            notify["nty_type"] = "device"
+            notify["msg_type"] = "other"
             notify["groupname"] = groupname
             notify["groupid"] = groupid
 

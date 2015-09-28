@@ -56,6 +56,8 @@ class AuthAddMemberHandler(BaseHandler):
         if owner == self.p_userid:
             notify = {}
             notify["name"] = "mx.group.authgroup_invited"
+            notify["nty_type"] = "device"
+            notify["msg_type"] = "other"
             notify["groupid"] = groupid
             notify["groupname"] = result.get("name", "")
             opter_info = yield mickey.userfetcher.getcontact(self.p_userid)
