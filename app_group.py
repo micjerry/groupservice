@@ -15,6 +15,7 @@ import motor
 
 import mickey.publish
 from mickey.daemon import Daemon
+from mickey.mongocon import mongo_url
 import mickey.logutil
 
 from handlers.listgroup import ListGroupHandler
@@ -64,15 +65,14 @@ class Application(tornado.web.Application):
                   (r"/group/accept/invitation", AcceptInviteHandler),
                   (r"/group/approve/newmember", AcceptMemberHandler)
                  ]
-        self.db = motor.MotorClient("mongodb://localhost:27017").group
-        self.userdb = motor.MotorClient("mongodb://localhost:27017").contact
+        self.db = motor.MotorClient(mongo_url).group
+        self.userdb = motor.MotorClient(mongo_url).contact
         self.publish = mickey.publish
         tornado.web.Application.__init__(self, handlers, debug=True)
  
 
 class MickeyDamon(Daemon):
     def run(self):
-        tornado.options.parse_command_line()
         mickey.logutil.setuplog(options.logfile)
         http_server = tornado.httpserver.HTTPServer(Application())
         http_server.listen(options.port)
