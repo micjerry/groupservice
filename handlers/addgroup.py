@@ -21,7 +21,7 @@ class AddGroupHandler(BaseHandler):
         publish = self.application.publish
         data = json.loads(self.request.body.decode("utf-8"))
         groupname = data.get("name", "")
-        owner = data.get("owner", "")
+        owner = data.get("owner", self.p_userid)
         invite = data.get("invite", "free")
 
         logging.info("begin to create group owner = %s, owner = %s, invite = %s" % (owner, groupname, invite))
@@ -49,7 +49,8 @@ class AddGroupHandler(BaseHandler):
         groupinfo["invite"] = invite
 
         if invite == "admin":
-            member_ids.remove(self.p_userid)
+            if self.p_userid in member_ids:
+                member_ids.remove(self.p_userid)
             groupinfo["appendings"] = member_ids
             groupinfo["members"] = [{"id":self.p_userid}]
         else:
@@ -69,8 +70,15 @@ class AddGroupHandler(BaseHandler):
             result_rt["owner"] = owner
             result_rt["invite"] = invite
 
-            if owner:
+            if invite == "admin":     
                 yield usercoll.find_and_modify({"id":owner}, 
+                                               {
+                                                 "$push":{"groups":{"id":groupid}},
+                                                 "$push":{"realgroups":groupid},
+                                                 "$unset": {"garbage": 1}
+                                               })
+            else:
+                yield usercoll.find_and_modify({"id":owner},
                                                {
                                                  "$push":{"groups":{"id":groupid}},
                                                  "$unset": {"garbage": 1}

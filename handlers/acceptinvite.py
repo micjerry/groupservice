@@ -61,6 +61,7 @@ class AcceptInviteHandler(BaseHandler):
         user_rst = yield usercoll.find_and_modify({"id":self.p_userid},
                                                   {
                                                     "$push":{"groups":{"id": groupid}},
+                                                    "$push":{"realgroups":groupid},
                                                     "$unset": {"garbage": 1}
                                                   }
                                                  )

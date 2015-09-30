@@ -47,7 +47,8 @@ class RemoveGroupHandler(BaseHandler):
                 receivers.append(userid)
                 yield usercoll.find_and_modify({"id":userid}, 
                                                {
-                                                 "$pull":{"groups":{"id":groupid}}
+                                                 "$pull":{"groups":{"id":groupid}},
+                                                 "$pull":{"realgroups":groupid}
                                                })
             
         else:

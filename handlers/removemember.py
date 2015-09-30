@@ -34,7 +34,7 @@ class RemoveMemberHandler(BaseHandler):
 
         if group:
             groupname = group.get("name", "")
-            owner = group.get("owner", "")
+            owner     = group.get("owner", "")
 
             if self.p_userid != owner and self.p_userid != userid:
                 logging.error("no right")
@@ -66,6 +66,7 @@ class RemoveMemberHandler(BaseHandler):
         yield usercoll.find_and_modify({"id":userid}, 
                                        {
                                          "$pull":{"groups":{"id":groupid}},
+                                         "$pull":{"realgroups":groupid},
                                          "$unset": {"garbage": 1}
                                        })
 
