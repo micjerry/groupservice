@@ -66,6 +66,7 @@ class ModGroupHandler(BaseHandler):
 
             notify = {}
             notify["name"] = "mx.group.group_change"
+            notify["pub_type"] = "any"
             notify["nty_type"] = "app"
             notify["groupid"] = groupid
             notify["action"] = "info_change"

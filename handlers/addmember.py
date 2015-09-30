@@ -63,6 +63,7 @@ class AddMemberHandler(BaseHandler):
             #send notify to new members, Hi you are invited to join groupxxx
             notify = {}
             notify["name"] = "mx.group.group_invite"
+            notify["pub_type"] = "any"
             notify["nty_type"] = "device"
             notify["msg_type"] = "other"
             notify["groupid"] = groupid
@@ -73,7 +74,8 @@ class AddMemberHandler(BaseHandler):
             #send notify to exist members, Hi groupxxx changed, new guys added
             notify_mod = {}
             notify_mod["name"] = "mx.group.group_change"
-            notify["nty_type"] = "app"
+            notify_mod["pub_type"] = "any"
+            notify_mod["nty_type"] = "app"
             notify_mod["groupid"] = groupid
             notify_mod["action"] = "new_member"
             notify_mod["members"] = add_members

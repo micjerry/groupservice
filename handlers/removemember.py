@@ -75,6 +75,7 @@ class RemoveMemberHandler(BaseHandler):
             #send notify to deleted user
             notify = {}
             notify["name"] = "mx.group.group_kick"
+            notify["pub_type"] = "any"
             notify["nty_type"] = "app"
             notify["groupid"] = groupid
             notify["groupname"] = groupname

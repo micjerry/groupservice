@@ -51,6 +51,7 @@ class AcceptMemberHandler(BaseHandler):
 
         notify = {}
         notify["name"] = "mx.group.authgroup_invited"
+        notify["pub_type"] = "any"
         notify["nty_type"] = "device"
         notify["msg_type"] = "other"
         notify["groupid"] = groupid

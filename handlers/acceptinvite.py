@@ -77,6 +77,7 @@ class AcceptInviteHandler(BaseHandler):
 
         notify_mod = {}
         notify_mod["name"] = "mx.group.group_change"
+        notify_mod["pub_type"] = "any"
         notify_mod["nty_type"] = "app"
         notify_mod["groupid"] = groupid
         notify_mod["action"] = "new_member"

@@ -56,6 +56,7 @@ class AuthAddMemberHandler(BaseHandler):
         if owner == self.p_userid:
             notify = {}
             notify["name"] = "mx.group.authgroup_invited"
+            notify["pub_type"] = "any"
             notify["nty_type"] = "device"
             notify["msg_type"] = "other"
             notify["groupid"] = groupid
@@ -79,6 +80,9 @@ class AuthAddMemberHandler(BaseHandler):
         else:
             notify = {}
             notify["name"] = "mx.group.member_apply"
+            notify["pub_type"] = "any"
+            notify["nty_type"] = "device"
+            notify["msg_type"] = "other"
             notify["groupid"] = groupid
             notify["groupname"] = result.get("name", "")
             notify["userid"] = self.p_userid
