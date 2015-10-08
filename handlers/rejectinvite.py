@@ -9,9 +9,8 @@ import motor
 from bson.objectid import ObjectId
 
 from mickey.basehandler import BaseHandler
-import mickey.ytxhttp
 
-class AcceptInviteHandler(BaseHandler):
+class RejectInviteHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
@@ -54,43 +53,16 @@ class AcceptInviteHandler(BaseHandler):
         #add member
         modresult = yield coll.find_and_modify({"_id":ObjectId(groupid)}, 
                                                {
-                                                 "$push":{"members":{"id":self.p_userid}},
                                                  "$pull":{"appendings":self.p_userid},
                                                  "$unset": {"garbage": 1}
                                                })
 
-        user_rst = yield usercoll.find_and_modify({"id":self.p_userid},
-                                                  {
-                                                    "$push":{"groups":{"id": groupid}},
-                                                    "$push":{"realgroups":groupid},
-                                                    "$unset": {"garbage": 1}
-                                                  }
-                                                 )
-        if not modresult or not user_rst:
-            logging.error("add %s to members failed" % self.p_userid)
+        if not modresult:
+            logging.error("remove %s from appendings failed" % self.p_userid)
             self.set_status(500)
             self.finish()
             return
 
-
-        #add members to ytx chat room
-        add_members = []
-        add_members.append({"id":self.p_userid})
-        mickey.ytxhttp.add_member(groupid, add_members)
-
-        #publish notify to users
-        add_members = []
-        add_members.append({"id":self.p_userid})
-
-        notify_mod = {}
-        notify_mod["name"] = "mx.group.group_change"
-        notify_mod["pub_type"] = "any"
-        notify_mod["nty_type"] = "app"
-        notify_mod["groupid"] = groupid
-        notify_mod["action"] = "new_member"
-        notify_mod["members"] = add_members
-
-        publish.publish_multi(exist_ids, notify_mod)
 
         self.finish()
 

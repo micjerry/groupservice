@@ -8,6 +8,8 @@ import motor
 from bson.objectid import ObjectId
 from mickey.basehandler import BaseHandler
 
+import mickey.ytxhttp
+
 class RemoveGroupHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
@@ -31,9 +33,14 @@ class RemoveGroupHandler(BaseHandler):
         groupname = ""
 
         if group:
+            chatid = group.get("chatid", "")
             members = group.get("members", [])
             groupname = group.get("name", [])
             owner = group.get("owner", "")
+
+            #remove group from ytx
+            if chatid:
+                mickey.ytxhttp.remove_group(groupid, chatid)
 
             if self.p_userid != owner:
                 logging.error("no right")

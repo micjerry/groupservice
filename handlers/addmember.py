@@ -8,6 +8,7 @@ import motor
 
 from bson.objectid import ObjectId
 from mickey.basehandler import BaseHandler
+import mickey.ytxhttp
 
 class AddMemberHandler(BaseHandler):
     @tornado.web.asynchronous
@@ -57,6 +58,9 @@ class AddMemberHandler(BaseHandler):
                                               "$addToSet":{"members":{"$each": add_members}},
                                               "$unset": {"garbage": 1}
                                             })
+
+        #add members to ytx chat room
+        mickey.ytxhttp.add_member(groupid, add_members)
 
         if result:
             self.set_status(200)

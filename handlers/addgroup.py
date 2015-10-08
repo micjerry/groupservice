@@ -7,6 +7,7 @@ import logging
 import motor
 
 from mickey.basehandler import BaseHandler
+import mickey.ytxhttp
 
 _garbage = ""
 for i in range(50):
@@ -63,6 +64,10 @@ class AddGroupHandler(BaseHandler):
         if result:
             result_rt = {}
             groupid = str(result)
+
+            #create ytx group for chat
+            mickey.ytxhttp.add_group(groupid)
+
             result_rt["members"] = groupinfo.get("members", [])
             result_rt["appendings"] = groupinfo.get("appendings", [])
             result_rt["groupid"] = groupid

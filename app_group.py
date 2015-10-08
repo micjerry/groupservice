@@ -36,6 +36,7 @@ from handlers.markdevice import MarkDeviceHandler
 from handlers.authaddmember import AuthAddMemberHandler
 from handlers.acceptmember import AcceptMemberHandler
 from handlers.acceptinvite import AcceptInviteHandler
+from handlers.rejectinvite import RejectInviteHandler
 
 from tornado.options import define, options
 define("port", default=8100, help="run on the given port", type=int)
@@ -63,6 +64,7 @@ class Application(tornado.web.Application):
                   (r"/group/mod/device/name", MarkDeviceHandler),
                   (r"/group/authadd/members", AuthAddMemberHandler),
                   (r"/group/accept/invitation", AcceptInviteHandler),
+                  (r"/group/reject/invitation", RejectInviteHandler),
                   (r"/group/approve/newmember", AcceptMemberHandler)
                  ]
         self.db = motor.MotorClient(options.mongo_url).group
