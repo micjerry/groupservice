@@ -59,6 +59,7 @@ class DisplayGroupHandler(BaseHandler):
             groupinfo["vip"] = result.get("vip", "false")
             groupinfo["vipname"] = result.get("vipname", "")
             groupinfo["invite"] = result.get("invite", "free")
+            groupinfo["chatid"] = result.get("chatid", "")
 
             self.write(groupinfo)
         else:

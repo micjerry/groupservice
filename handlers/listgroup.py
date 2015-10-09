@@ -40,6 +40,7 @@ class ListGroupHandler(BaseHandler):
                         groupinfo["id"] = groupid
                         groupinfo["name"] = group.get("name", "")
                         groupinfo["invite"] = group.get("invite", "")
+                        groupinfo["chatid"] = group.get("chatid", "")
                         list_groups.append(groupinfo)
                 
             self.write({"groups": list_groups})
