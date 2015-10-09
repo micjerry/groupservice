@@ -39,15 +39,15 @@ class MarkMemberHandler(BaseHandler):
                 self.finish()
                 return
 
-            members = result.get("members", [])
-            for member in members:
-                if (member.get("id", "") == userid):
-                    member["remark"] = remark
-                    break
+            exist_ids = [x.get("id", "") for x in result.get("members", [])]
+            if not userid in exist_ids:
+                self.set_status(404)
+                self.finish()
+                return
 
-            modresult = yield coll.find_and_modify({"_id": ObjectId(groupid)},
+            modresult = yield coll.find_and_modify({"_id": ObjectId(groupid), "members.id": userid},
                                                    {
-                                                     "$set":{"members":members},
+                                                     "$set":{"members.$.remark":remark},
                                                      "$unset": {"garbage": 1}
                                                    })
 

@@ -8,6 +8,7 @@ import motor
 
 from mickey.basehandler import BaseHandler
 import mickey.ytxhttp
+import mickey.userfetcher
 
 _garbage = ""
 for i in range(50):
@@ -97,6 +98,10 @@ class AddGroupHandler(BaseHandler):
             notify = {}
             if invite == "admin":
                 notify["name"] = "mx.group.authgroup_invited"
+                notify["userid"] = self.p_userid
+                opter_info = yield mickey.userfetcher.getcontact(self.p_userid)
+                if opter_info:
+                    notify["username"] = opter_info.get("name", "")
             else:
                 notify["name"] = "mx.group.group_invite"
 

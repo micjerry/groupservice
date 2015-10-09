@@ -61,6 +61,7 @@ class AuthAddMemberHandler(BaseHandler):
             notify["msg_type"] = "other"
             notify["groupid"] = groupid
             notify["groupname"] = result.get("name", "")
+            notify["userid"] = self.p_userid
             opter_info = yield mickey.userfetcher.getcontact(self.p_userid)
             if opter_info:
                 notify["username"] = opter_info.get("name", "")
