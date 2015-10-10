@@ -3,12 +3,13 @@ import tornado.gen
 import json
 import io
 import logging
-
+import datetime
 import motor
 
 from bson.objectid import ObjectId
 from mickey.basehandler import BaseHandler
 import mickey.ytxhttp
+import mickey.commonconf
 
 class AddMemberHandler(BaseHandler):
     @tornado.web.asynchronous
@@ -53,11 +54,20 @@ class AddMemberHandler(BaseHandler):
         receivers = list(filter(lambda x: x not in old_receivers, [x.get("id", "") for x in members]))
         add_members = [{"id":x} for x in receivers]
         
-        result = yield coll.find_and_modify({"_id":ObjectId(groupid)}, 
-                                            {
-                                              "$addToSet":{"members":{"$each": add_members}},
-                                              "$unset": {"garbage": 1}
-                                            })
+        if not result.get('expireAt', None):
+            result = yield coll.find_and_modify({"_id":ObjectId(groupid)}, 
+                                                {
+                                                  "$addToSet":{"members":{"$each": add_members}},
+                                                  "$unset": {"garbage": 1}
+                                                })
+        else:
+            new_expiredate = datetime.datetime.utcnow() + datetime.timedelta(days = mickey.commonconf.conf_expire_time)
+            result = yield coll.find_and_modify({"_id":ObjectId(groupid)},
+                                                {
+                                                  "$addToSet":{"members":{"$each": add_members}},
+                                                  "$set":{"expireAt": new_expiredate},
+                                                  "$unset": {"garbage": 1}
+                                                })
 
         #add members to ytx chat room
         mickey.ytxhttp.add_member(groupid, add_members)

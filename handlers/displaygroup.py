@@ -4,12 +4,14 @@ import tornado.httpclient
 import json
 import io
 import logging
+import datetime
 
 import motor
 
 from bson.objectid import ObjectId
 import mickey.userfetcher
 from mickey.basehandler import BaseHandler
+import mickey.commonconf
 
 class DisplayGroupHandler(BaseHandler):
     @tornado.web.asynchronous
@@ -25,6 +27,16 @@ class DisplayGroupHandler(BaseHandler):
         result = yield coll.find_one({"_id":ObjectId(groupid)})
 
         if result:
+            #set new expire
+            expire_set = result.get('expireAt', None)
+            if expire_set:
+                new_expiredate = datetime.datetime.utcnow() + datetime.timedelta(days = mickey.commonconf.conf_expire_time)
+                modresult = yield coll.find_and_modify({"_id":ObjectId(groupid)},
+                                                       {
+                                                         "$set":{"expireAt": new_expiredate},
+                                                         "$unset": {"garbage": 1}
+                                                       })
+
             groupinfo = {}
             groupinfo["groupid"] = groupid
             rs_members = []
@@ -34,7 +46,6 @@ class DisplayGroupHandler(BaseHandler):
                 u_id = item.get("id", "")
                 u_member["id"] = u_id
                 u_member["remark"] = item.get("remark", "")
-                u_member["realname"] = item.get("realname", "")
                 
                 # get user information
                 c_info = yield mickey.userfetcher.getcontact(u_id)
@@ -52,7 +63,6 @@ class DisplayGroupHandler(BaseHandler):
 
             groupinfo["members"] = rs_members 
             groupinfo["invitees"] = result.get("invitees", [])
-            groupinfo["devices"] = result.get("devices", [])
            
             groupinfo["name"] = result.get("name", "")
             groupinfo["owner"] = result.get("owner", "")

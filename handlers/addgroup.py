@@ -3,12 +3,14 @@ import tornado.gen
 import json
 import io
 import logging
+import datetime
 
 import motor
 
 from mickey.basehandler import BaseHandler
 import mickey.ytxhttp
 import mickey.userfetcher
+import mickey.commonconf
 
 _garbage = ""
 for i in range(50):
@@ -24,7 +26,7 @@ class AddGroupHandler(BaseHandler):
         data = json.loads(self.request.body.decode("utf-8"))
         groupname = data.get("name", "")
         owner = data.get("owner", self.p_userid)
-        invite = data.get("invite", "free")
+        invite = data.get("invite", "free").lower()
 
         logging.info("begin to create group owner = %s, owner = %s, invite = %s" % (owner, groupname, invite))
 
@@ -34,7 +36,7 @@ class AddGroupHandler(BaseHandler):
             self.finish()
             return
 
-        if (invite.lower() != "free") and (invite.lower() != "admin"):
+        if (invite != "free") and (invite != "admin"):
             logging.error("invalid invite type %s" % invite)
             self.set_status(403)
             self.finish()
@@ -57,9 +59,10 @@ class AddGroupHandler(BaseHandler):
             groupinfo["members"] = [{"id":self.p_userid}]
         else:
             groupinfo["members"] = members
+            groupinfo['expireAt'] = datetime.datetime.utcnow() + datetime.timedelta(days = mickey.commonconf.conf_expire_time)
 
         groupinfo["garbage"] = _garbage
-        
+
         result = yield coll.insert(groupinfo)
 
         if result:
@@ -79,14 +82,7 @@ class AddGroupHandler(BaseHandler):
             if invite == "admin":     
                 yield usercoll.find_and_modify({"id":owner}, 
                                                {
-                                                 "$push":{"groups":{"id":groupid}},
                                                  "$push":{"realgroups":groupid},
-                                                 "$unset": {"garbage": 1}
-                                               })
-            else:
-                yield usercoll.find_and_modify({"id":owner},
-                                               {
-                                                 "$push":{"groups":{"id":groupid}},
                                                  "$unset": {"garbage": 1}
                                                })
 

@@ -4,6 +4,8 @@ import json
 import io
 import logging
 
+from bson.objectid import ObjectId
+
 import motor
 from mickey.basehandler import BaseHandler
 
@@ -12,6 +14,7 @@ class UserAddGroupHandler(BaseHandler):
     @tornado.gen.coroutine
     def post(self):
         coll = self.application.userdb.users
+        groupcoll = self.application.db.groups
         data = json.loads(self.request.body.decode("utf-8"))
         userid = data.get("userid", "")
         groupid = data.get("groupid", "")
@@ -35,6 +38,12 @@ class UserAddGroupHandler(BaseHandler):
                                               "$unset": {"garbage": 1}
                                             })
 
+        #update group savers, if someone save this group, set it not expire
+        grp_result = yield groupcoll.find_and_modify({"_id":ObjectId(groupid)},
+                                                {
+                                                  "$push":{"savers":self.p_userid},
+                                                  "$unset": {"garbage": 1, "expireAt": 1}
+                                                })
         if result:
             self.set_status(200)
         else:

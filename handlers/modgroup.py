@@ -3,11 +3,12 @@ import tornado.gen
 import json
 import io
 import logging
-
+import datetime
 import motor
 
 from bson.objectid import ObjectId
 from mickey.basehandler import BaseHandler
+import mickey.commonconf
 
 class ModGroupHandler(BaseHandler):
     @tornado.web.asynchronous
@@ -32,15 +33,17 @@ class ModGroupHandler(BaseHandler):
             return
 
         group = yield coll.find_one({"_id":ObjectId(groupid)})
+        group_oldinvite = None
+        group_oldowner = None
         if not group:
             logging.error("group not exist")
             self.set_status(404)
             self.finish()
             return
         else:
-            owner = group.get("owner", "")
-            invite = group.get("invite", "free")
-            if self.p_userid != owner and invite == "admin":
+            group_oldowner = group.get("owner", "")
+            group_oldinvite = group.get("invite", "free")
+            if group_oldowner != self.p_userid and group_oldinvite == "admin":
                 logging.error("you are not the owner")
                 self.set_status(403)
                 self.finish()
@@ -53,6 +56,10 @@ class ModGroupHandler(BaseHandler):
 
         if owner:
             groupinfo["owner"] = owner
+
+        if group.get('expireAt', None):
+            #set new expire date
+            groupinfo['expireAt'] = datetime.datetime.utcnow() + datetime.timedelta(days = mickey.commonconf.conf_expire_time)
         
         result = yield coll.update({"_id":ObjectId(groupid)}, 
                                    {

@@ -29,10 +29,6 @@ from handlers.addmember import AddMemberHandler
 from handlers.removemember import RemoveMemberHandler
 from handlers.markmember import MarkMemberHandler
 from handlers.addinvite import AddInviteHandler
-from handlers.realmember import RealMemberHandler
-from handlers.adddevice import AddDeviceHandler
-from handlers.removedevice import RemoveDeviceHandler
-from handlers.markdevice import MarkDeviceHandler
 from handlers.authaddmember import AuthAddMemberHandler
 from handlers.acceptmember import AcceptMemberHandler
 from handlers.acceptinvite import AcceptInviteHandler
@@ -47,21 +43,17 @@ define("logfile", default="/var/log/app_group_is1", help="Log file")
 
 class Application(tornado.web.Application):
     def __init__(self):
-        handlers=[(r"/group/user/list/groups", ListGroupHandler),
+        handlers=[(r"/user/list/groups", ListGroupHandler),
                   (r"/group/display/detail", DisplayGroupHandler),
                   (r"/group/create/group", AddGroupHandler),
                   (r"/group/dismiss/group", RemoveGroupHandler),
-                  (r"/group/user/add/group", UserAddGroupHandler),
-                  (r"/group/user/remove/group", UserRemoveGroupHandler),
+                  (r"/user/add/group", UserAddGroupHandler),
+                  (r"/user/remove/group", UserRemoveGroupHandler),
                   (r"/group/mod/group", ModGroupHandler),
                   (r"/group/add/members", AddMemberHandler),
                   (r"/group/remove/member", RemoveMemberHandler),
                   (r"/group/mod/member/remark", MarkMemberHandler),
                   (r"/group/add/invitees", AddInviteHandler),
-                  (r"/group/mod/realname", RealMemberHandler),
-                  (r"/group/add/device", AddDeviceHandler),
-                  (r"/group/remove/device", RemoveDeviceHandler),
-                  (r"/group/mod/device/name", MarkDeviceHandler),
                   (r"/group/authadd/members", AuthAddMemberHandler),
                   (r"/group/accept/invitation", AcceptInviteHandler),
                   (r"/group/reject/invitation", RejectInviteHandler),
