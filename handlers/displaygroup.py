@@ -18,11 +18,31 @@ class DisplayGroupHandler(BaseHandler):
     @tornado.gen.coroutine
     def post(self):
         coll = self.application.db.groups
+        chatcoll = self.application.db.chats
         usercoll = self.application.userdb.users
         data = json.loads(self.request.body.decode("utf-8"))
-        groupid = data.get("groupid", "invalid")
+        groupid = data.get("groupid", None)
+        chatid = data.get("chatid", None)
+
+        if not groupid and not chatid:
+            logging.error("invalid parameter")
+            self.set_status(403)
+            self.finish()
+            return
 
         logging.info("begin to display group %s" % groupid)
+
+        if not groupid and chatid:
+            print(chatid)
+            chat = yield chatcoll.find_one({"id":chatid})
+            if not chat:
+                self.set_status(404)
+                self.finish()
+                return
+
+            print(chat)
+            groupid = chat.get('gid', '')
+            print(groupid)
 
         result = yield coll.find_one({"_id":ObjectId(groupid)})
 
