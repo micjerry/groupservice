@@ -33,16 +33,13 @@ class DisplayGroupHandler(BaseHandler):
         logging.info("begin to display group %s" % groupid)
 
         if not groupid and chatid:
-            print(chatid)
             chat = yield chatcoll.find_one({"id":chatid})
             if not chat:
                 self.set_status(404)
                 self.finish()
                 return
 
-            print(chat)
             groupid = chat.get('gid', '')
-            print(groupid)
 
         result = yield coll.find_one({"_id":ObjectId(groupid)})
 
