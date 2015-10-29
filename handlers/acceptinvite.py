@@ -38,7 +38,7 @@ class AcceptInviteHandler(BaseHandler):
             return
 
         #get the appendings
-        appendings = result.get("appendings", [])        
+        appendings = [x.get("id", "") for x in result.get("appendings", [])]
 
         #get the exist ids
         exist_ids = [x.get("id", "") for x in result.get("members", [])]
@@ -49,13 +49,17 @@ class AcceptInviteHandler(BaseHandler):
             self.finish()
             return
 
-        new_appendings = list(filter(lambda x: x!= self.p_userid, appendings))
+        #get the remark
+        remark=""
+        for item in result.get("appendings", []):
+            if item.get("id", "") == self.p_userid:
+                remark = item.get("remark", "")
 
         #add member
         modresult = yield coll.find_and_modify({"_id":ObjectId(groupid)}, 
                                                {
-                                                 "$push":{"members":{"id":self.p_userid}},
-                                                 "$pull":{"appendings":self.p_userid},
+                                                 "$push":{"members":{"id":self.p_userid, "remark":remark}},
+                                                 "$pull":{"appendings":{"id":self.p_userid}},
                                                  "$unset": {"garbage": 1}
                                                })
 

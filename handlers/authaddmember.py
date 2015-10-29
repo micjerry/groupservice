@@ -10,6 +10,9 @@ from bson.objectid import ObjectId
 import mickey.userfetcher
 from mickey.basehandler import BaseHandler
 
+from libgroup import filter_mydevice
+from libgroup import add_groupmembers
+
 class AuthAddMemberHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
@@ -54,6 +57,16 @@ class AuthAddMemberHandler(BaseHandler):
         owner = result.get("owner", "")        
 
         if owner == self.p_userid:
+            mydevices = yield filter_mydevice(self.p_userid, add_members)
+            if mydevices:
+                add_devices = [{"id":x} for x in mydevices]
+                yield add_groupmembers(coll, publish, groupid, add_devices, None)
+                add_members = list(set(add_members) - set(mydevices))
+
+            if not add_members:
+                self.finish()
+                return
+
             notify = {}
             notify["name"] = "mx.group.authgroup_invited"
             notify["pub_type"] = "any"
@@ -109,3 +122,5 @@ class AuthAddMemberHandler(BaseHandler):
             publish.publish_one(owner, notify)
             self.finish()
             return
+
+

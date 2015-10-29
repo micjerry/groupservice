@@ -11,6 +11,8 @@ from mickey.basehandler import BaseHandler
 import mickey.ytxhttp
 import mickey.commonconf
 
+from libgroup import add_groupmembers
+
 class AddMemberHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
@@ -53,48 +55,20 @@ class AddMemberHandler(BaseHandler):
         # get members and the receivers
         receivers = list(filter(lambda x: x not in old_receivers, [x.get("id", "") for x in members]))
         add_members = [{"id":x} for x in receivers]
+
+        result = add_groupmembers(coll, publish, groupid, add_members, )
         
-        if not result.get('expireAt', None):
-            result = yield coll.find_and_modify({"_id":ObjectId(groupid)}, 
-                                                {
-                                                  "$addToSet":{"members":{"$each": add_members}},
-                                                  "$unset": {"garbage": 1}
-                                                })
-        else:
+        new_expiredate = None
+        if result.get('expireAt', None):
             new_expiredate = datetime.datetime.utcnow() + datetime.timedelta(days = mickey.commonconf.conf_expire_time)
-            result = yield coll.find_and_modify({"_id":ObjectId(groupid)},
-                                                {
-                                                  "$addToSet":{"members":{"$each": add_members}},
-                                                  "$set":{"expireAt": new_expiredate},
-                                                  "$unset": {"garbage": 1}
-                                                })
+
+        result = yield add_groupmembers(coll, publish, groupid, add_members, new_expiredate)
 
         #add members to ytx chat room
         mickey.ytxhttp.add_member(groupid, add_members)
 
         if result:
             self.set_status(200)
-            #send notify to new members, Hi you are invited to join groupxxx
-            notify = {}
-            notify["name"] = "mx.group.group_invite"
-            notify["pub_type"] = "any"
-            notify["nty_type"] = "device"
-            notify["msg_type"] = "other"
-            notify["groupid"] = groupid
-            notify["groupname"] = result.get("name", "")
-
-            publish.publish_multi(receivers, notify)
-
-            #send notify to exist members, Hi groupxxx changed, new guys added
-            notify_mod = {}
-            notify_mod["name"] = "mx.group.group_change"
-            notify_mod["pub_type"] = "any"
-            notify_mod["nty_type"] = "app"
-            notify_mod["groupid"] = groupid
-            notify_mod["action"] = "new_member"
-            notify_mod["members"] = add_members
-
-            publish.publish_multi(old_receivers, notify_mod)
         else:
             logging.error("add member failed")
             self.set_status(500)
