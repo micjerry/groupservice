@@ -8,7 +8,7 @@ from bson.objectid import ObjectId
 _logger = logging.getLogger(__name__)
 
 _filtermydevice_sql = """
-  SELECT device_userID FROM deviceusermap WHERE userEntity_userID = %s AND device_userID IN %s AND role = 'ADMIN';
+  SELECT device_userID FROM deviceusermap WHERE userEntity_userID = %s AND device_userID IN %s;
 """
 
 @tornado.gen.coroutine
