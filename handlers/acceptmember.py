@@ -63,7 +63,13 @@ class AcceptMemberHandler(BaseHandler):
         else:
             logging.error("get user info failed %s" % inviteid)
 
-        append_result = yield coll.find_and_modify({"_id":ObjectId(groupid)}, {"$addToSet":{"appendings":{"$each": add_members}}})
+        adddb_members = list(filter(lambda x: x.get("id", "") in add_members, members))
+
+        append_result = yield coll.find_and_modify({"_id":ObjectId(groupid)}, 
+                                                   {
+                                                     "$addToSet":{"appendings":{"$each": adddb_members}},
+                                                     "$unset": {"garbage": 1}
+                                                   })
         if append_result:
             self.set_status(200)
             

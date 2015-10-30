@@ -81,7 +81,12 @@ class AuthAddMemberHandler(BaseHandler):
             else:
                 logging.error("get user info failed %s" % self.p_userid)
                 
-            append_result = yield coll.find_and_modify({"_id":ObjectId(groupid)}, {"$addToSet":{"appendings":{"$each": add_members}}})
+            adddb_members = list(filter(lambda x: x.get("id", "") in add_members, members))
+            append_result = yield coll.find_and_modify({"_id":ObjectId(groupid)}, 
+                                                       {
+                                                         "$addToSet":{"appendings":{"$each": adddb_members}},
+                                                         "$unset": {"garbage": 1}
+                                                       })
             if append_result:
                 self.set_status(200)
                 publish.publish_multi(add_members, notify)
