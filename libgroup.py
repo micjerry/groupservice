@@ -8,7 +8,7 @@ from bson.objectid import ObjectId
 _logger = logging.getLogger(__name__)
 
 _filtermydevice_sql = """
-  SELECT userID FROM userentity WHERE owner = %s AND userID IN %s;
+  SELECT device_userID FROM deviceusermap WHERE userEntity_userID = %s AND device_userID IN %s AND role = 'ADMIN';
 """
 
 @tornado.gen.coroutine
@@ -31,7 +31,7 @@ def filter_mydevice(userid, members):
         rows = cur.fetchall()
         mylist = []
         for item in rows:
-            mylist.append(str(item.get("userID", "")))
+            mylist.append(str(item.get("device_userID", "")))
 
         cur.close()
         return mylist
