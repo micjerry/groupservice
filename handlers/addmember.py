@@ -56,12 +56,10 @@ class AddMemberHandler(BaseHandler):
         receivers = list(filter(lambda x: x not in old_receivers, [x.get("id", "") for x in members]))
         add_members = [{"id":x} for x in receivers]
 
-        result = add_groupmembers(coll, publish, groupid, add_members, )
-        
         new_expiredate = None
         if result.get('expireAt', None):
             new_expiredate = datetime.datetime.utcnow() + datetime.timedelta(days = mickey.commonconf.conf_expire_time)
-
+            
         result = yield add_groupmembers(coll, publish, groupid, add_members, new_expiredate)
 
         #add members to ytx chat room

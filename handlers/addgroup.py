@@ -31,6 +31,7 @@ class AddGroupHandler(BaseHandler):
         invite = data.get("invite", "free").lower()
 
         logging.info("begin to create group owner = %s, owner = %s, invite = %s" % (owner, groupname, invite))
+        logging.info("data = %r" % data)
 
         if self.p_userid != owner:
             logging.error("forbiden you can not create group for other user")
