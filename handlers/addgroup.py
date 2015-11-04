@@ -75,6 +75,7 @@ class AddGroupHandler(BaseHandler):
         if result:
             result_rt = {}
             groupid = str(result)
+            logging.info("create group success %s" % groupid)
 
             #create ytx group for chat
             mickey.ytxhttp.add_group(groupid)

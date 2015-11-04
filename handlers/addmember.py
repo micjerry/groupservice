@@ -55,6 +55,9 @@ class AddMemberHandler(BaseHandler):
         # get members and the receivers
         receivers = list(filter(lambda x: x not in old_receivers, [x.get("id", "") for x in members]))
         add_members = [{"id":x} for x in receivers]
+        if not add_members:
+            self.finish()
+            return
 
         new_expiredate = None
         if result.get('expireAt', None):
