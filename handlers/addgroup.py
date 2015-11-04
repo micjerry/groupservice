@@ -103,7 +103,7 @@ class AddGroupHandler(BaseHandler):
             notify = {}
             notify["name"] = "mx.group.group_invite"
             notify["pub_type"] = "any"
-            notify["nty_type"] = "device"
+            notify["nty_type"] = "app"
             notify["msg_type"] = "other"
             notify["groupname"] = groupname
             notify["groupid"] = groupid
