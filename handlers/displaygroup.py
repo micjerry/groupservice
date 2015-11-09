@@ -80,6 +80,7 @@ class DisplayGroupHandler(BaseHandler):
 
             groupinfo["members"] = rs_members 
             groupinfo["invitees"] = result.get("invitees", [])
+            groupinfo["appendings"] = result.get("appendings", [])
            
             groupinfo["name"] = result.get("name", "")
             groupinfo["owner"] = result.get("owner", "")
