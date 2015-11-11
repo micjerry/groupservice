@@ -78,9 +78,29 @@ class DisplayGroupHandler(BaseHandler):
                 
                 rs_members.append(u_member)
 
+            rs_appendings = []
+            for item in result.get("appendings", []):
+                u_appending = {}
+                u_id = item.get("id", "")
+                u_appending["id"] = u_id
+                u_appending["remark"] = item.get("remark", "")
+
+                # get user information
+                c_info = yield mickey.userfetcher.getcontact(u_id)
+                if not c_info:
+                    logging.error("get user info failed %s" % u_id)
+                    continue
+
+                u_appending["nickname"] = c_info.get("commName", "")
+                u_appending["name"] = c_info.get("name", "")
+                u_appending["type"] = c_info.get("type", "PERSON")
+                u_appending["contactInfos"] = c_info.get("contactInfos", [])
+                
+                rs_appendings.append(u_appending)
+
             groupinfo["members"] = rs_members 
             groupinfo["invitees"] = result.get("invitees", [])
-            groupinfo["appendings"] = result.get("appendings", [])
+            groupinfo["appendings"] = rs_appendings
            
             groupinfo["name"] = result.get("name", "")
             groupinfo["owner"] = result.get("owner", "")
