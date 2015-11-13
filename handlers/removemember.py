@@ -87,6 +87,10 @@ class RemoveMemberHandler(BaseHandler):
             notify["groupid"] = groupid
             notify["groupname"] = groupname
             notify["userid"] = userid
+            if self.p_userid == userid:
+                notify["quit"] = "true"
+            else:
+                notify["quit"] = "false"
 
             publish.publish_multi(receivers, notify)
         else:
