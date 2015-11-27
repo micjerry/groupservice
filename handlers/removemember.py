@@ -8,7 +8,7 @@ import motor
 
 from bson.objectid import ObjectId
 from mickey.basehandler import BaseHandler
-import mickey.ytxhttp
+import mickey.tp
 
 class RemoveMemberHandler(BaseHandler):
     @tornado.web.asynchronous
@@ -74,10 +74,7 @@ class RemoveMemberHandler(BaseHandler):
         if result:
             self.set_status(200)
 
-            #remove members from ytx chat room
-            del_members = []
-            del_members.append({"id":userid})
-            mickey.ytxhttp.remove_member(groupid, del_members)
+            mickey.tp.removegroupmember(groupid, userid, "")
 
             #send notify to deleted user
             notify = {}

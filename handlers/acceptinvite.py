@@ -9,7 +9,7 @@ import motor
 from bson.objectid import ObjectId
 
 from mickey.basehandler import BaseHandler
-import mickey.ytxhttp
+import mickey.tp
 
 class AcceptInviteHandler(BaseHandler):
     @tornado.web.asynchronous
@@ -78,9 +78,7 @@ class AcceptInviteHandler(BaseHandler):
 
 
         #add members to ytx chat room
-        add_members = []
-        add_members.append({"id":self.p_userid})
-        mickey.ytxhttp.add_member(groupid, add_members)
+        mickey.tp.addgroupmember(groupid, self.p_userid, "")
 
         #publish notify to users
         add_members = []

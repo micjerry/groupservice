@@ -8,7 +8,7 @@ import datetime
 import motor
 
 from mickey.basehandler import BaseHandler
-import mickey.ytxhttp
+import mickey.tp
 import mickey.userfetcher
 import mickey.commonconf
 
@@ -78,7 +78,7 @@ class AddGroupHandler(BaseHandler):
             logging.info("create group success %s" % groupid)
 
             #create ytx group for chat
-            mickey.ytxhttp.add_group(groupid)
+            mickey.tp.addgroup(groupid, self.p_userid, "")
 
             result_rt["members"] = groupinfo.get("members", [])
             result_rt["appendings"] = groupinfo.get("appendings", [])

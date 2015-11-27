@@ -8,8 +8,8 @@ import motor
 
 from bson.objectid import ObjectId
 from mickey.basehandler import BaseHandler
-import mickey.ytxhttp
 import mickey.commonconf
+import mickey.tp
 
 from libgroup import add_groupmembers
 
@@ -66,7 +66,8 @@ class AddMemberHandler(BaseHandler):
         result = yield add_groupmembers(coll, publish, groupid, add_members, new_expiredate)
 
         #add members to ytx chat room
-        mickey.ytxhttp.add_member(groupid, add_members)
+        for item in receivers:
+            mickey.tp.addgroupmember(groupid, item, "")
 
         if result:
             self.set_status(200)

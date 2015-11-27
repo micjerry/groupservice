@@ -18,7 +18,7 @@ class DisplayGroupHandler(BaseHandler):
     @tornado.gen.coroutine
     def post(self):
         coll = self.application.db.groups
-        chatcoll = self.application.db.chats
+        chatcoll = self.application.db.tbchats
         usercoll = self.application.userdb.users
         data = json.loads(self.request.body.decode("utf-8"))
         groupid = data.get("groupid", None)
@@ -107,7 +107,7 @@ class DisplayGroupHandler(BaseHandler):
             groupinfo["vip"] = result.get("vip", "false")
             groupinfo["vipname"] = result.get("vipname", "")
             groupinfo["invite"] = result.get("invite", "free")
-            groupinfo["chatid"] = result.get("chatid", "")
+            groupinfo["tp_chatid"] = result.get("tp_chatid", "")
 
             self.write(groupinfo)
         else:
