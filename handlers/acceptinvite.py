@@ -10,6 +10,7 @@ from bson.objectid import ObjectId
 
 from mickey.basehandler import BaseHandler
 import mickey.tp
+import mickey.maps
 
 class AcceptInviteHandler(BaseHandler):
     @tornado.web.asynchronous
@@ -93,6 +94,9 @@ class AcceptInviteHandler(BaseHandler):
         notify_mod["members"] = add_members
 
         publish.publish_multi(exist_ids, notify_mod)
+
+        #add maps
+        mickey.maps.addmembers(groupid, [self.p_userid], 1)
 
         self.finish()
 

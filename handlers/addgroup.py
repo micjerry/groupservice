@@ -11,8 +11,10 @@ from mickey.basehandler import BaseHandler
 import mickey.tp
 import mickey.userfetcher
 import mickey.commonconf
+import mickey.maps
 
-from libgroup import filter_mydevice
+from mickey.commonconf import MAX_REALGROUPS, MAX_MEMBERS
+from libgroup import filter_mydevice, getreal_groups
 
 _garbage = ""
 for i in range(50):
@@ -56,6 +58,12 @@ class AddGroupHandler(BaseHandler):
         groupinfo["invite"] = invite
 
         if invite == "admin":
+            realgroups = yield getreal_groups(self.p_userid)
+            if ((realgroups + 1) > MAX_REALGROUPS) or (len(members) > MAX_REALGROUPS):
+                self.set_status(413)
+                self.finish()
+                return
+            
             canadd_members = [self.p_userid]
             my_devices =  yield filter_mydevice(self.p_userid, member_ids)
             if my_devices:
@@ -120,6 +128,13 @@ class AddGroupHandler(BaseHandler):
                 if opter_info:
                     notify["username"] = opter_info.get("name", "")
                 publish.publish_multi(invite_receivers, notify)
+
+            # add maps
+            if invite == "admin":
+                mickey.maps.addgroup(groupid, self.p_userid, [], 1)
+            else:
+                add_receivers.append(self.p_userid)
+                mickey.maps.addgroup(groupid, self.p_userid, add_receivers)
 
         else:
             self.set_status(500)

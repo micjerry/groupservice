@@ -9,6 +9,7 @@ import motor
 from bson.objectid import ObjectId
 from mickey.basehandler import BaseHandler
 import mickey.tp
+import mickey.maps
 
 class RemoveMemberHandler(BaseHandler):
     @tornado.web.asynchronous
@@ -90,6 +91,9 @@ class RemoveMemberHandler(BaseHandler):
                 notify["quit"] = "false"
 
             publish.publish_multi(receivers, notify)
+
+            #remove maps
+            mickey.maps.removemembers(groupid, [userid])
         else:
             logging.error("remove member failed groupid = %s, member = %s" % (groupid, userid))
             self.set_status(500)

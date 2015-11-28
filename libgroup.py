@@ -4,11 +4,16 @@ import tornado.gen
 import tornado_mysql
 from mickey.mysqlcon import get_mysqlcon
 from bson.objectid import ObjectId
+import mickey.maps
 
 _logger = logging.getLogger(__name__)
 
 _filtermydevice_sql = """
   SELECT device_userID FROM deviceusermap WHERE userEntity_userID = %s AND device_userID IN %s;
+"""
+
+_getrealgroups_sql = """
+  SELECT COUNT(*) AS groupnumber FROM groupusermap WHERE userId = %s AND role = %s and groupType = 1;
 """
 
 @tornado.gen.coroutine
@@ -40,6 +45,28 @@ def filter_mydevice(userid, members):
         return False
     finally:
         conn.close()
+
+@tornado.gen.coroutine
+def getreal_groups(userid):
+    conn = yield get_mysqlcon('mxsuser')
+    if not conn:
+        logging.error("connect to mysql failed")
+        return 0
+
+    try:
+        cur = conn.cursor(tornado_mysql.cursors.DictCursor)
+        yield cur.execute(_getrealgroups_sql, (userid, 'ADMIN'))
+        result = cur.fetchone()
+        cur.close()
+        if result:
+            return result.get('groupnumber', 0)
+    except Exception as e:
+        logging.error("oper db failed {0}".format(e))
+        return 0
+    finally:
+        conn.close()
+
+    return 0
 
 @tornado.gen.coroutine
 def add_groupmembers(coll, publish, groupid, members, expires=None):
@@ -77,6 +104,8 @@ def add_groupmembers(coll, publish, groupid, members, expires=None):
     invite_receivers = [x.get("id", "") for x in members]
 
     publish.publish_multi(invite_receivers, notify)
+    #add maps
+    mickey.maps.addmembers(groupid, invite_receivers)
 
     notify_mod = {}
     notify_mod["name"] = "mx.group.group_change"

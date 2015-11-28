@@ -9,6 +9,7 @@ from bson.objectid import ObjectId
 from mickey.basehandler import BaseHandler
 
 import mickey.tp
+import mickey.maps
 
 class RemoveGroupHandler(BaseHandler):
     @tornado.web.asynchronous
@@ -77,6 +78,9 @@ class RemoveGroupHandler(BaseHandler):
             notify["groupname"] = groupname
 
             publish.publish_multi(receivers, notify)
+            
+            #remove maps
+            mickey.maps.rmvgroup(groupid, self.p_userid, receivers)
         else:
             logging.error("remove failed groupid = %s" % groupid)
             self.set_status(500)

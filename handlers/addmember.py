@@ -65,7 +65,7 @@ class AddMemberHandler(BaseHandler):
             
         result = yield add_groupmembers(coll, publish, groupid, add_members, new_expiredate)
 
-        #add members to ytx chat room
+        #add members to openapi chat room
         for item in receivers:
             mickey.tp.addgroupmember(groupid, item, "")
 
