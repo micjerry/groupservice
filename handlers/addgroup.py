@@ -26,6 +26,7 @@ class AddGroupHandler(BaseHandler):
     def post(self):
         coll = self.application.db.groups
         usercoll = self.application.userdb.users
+        token = self.request.headers.get("Authorization", "")
         publish = self.application.publish
         data = json.loads(self.request.body.decode("utf-8"))
         groupname = data.get("name", "")
@@ -124,7 +125,7 @@ class AddGroupHandler(BaseHandler):
                 invite_receivers = [x.get("id", "") for x in groupinfo.get("appendings", [])]
                 notify["name"] = "mx.group.authgroup_invited"
                 notify["userid"] = self.p_userid
-                opter_info = yield mickey.userfetcher.getcontact(self.p_userid)
+                opter_info = yield mickey.userfetcher.getcontact(self.p_userid, token)
                 if opter_info:
                     notify["username"] = opter_info.get("name", "")
                 publish.publish_multi(invite_receivers, notify)

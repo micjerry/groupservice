@@ -16,6 +16,7 @@ class AcceptMemberHandler(BaseHandler):
     def post(self):
         coll = self.application.db.groups
         publish = self.application.publish
+        token = self.request.headers.get("Authorization", "")
         data = json.loads(self.request.body.decode("utf-8"))
         groupid = data.get("groupid", "")
         inviteid = data.get("invite_id", self.p_userid)
@@ -57,7 +58,7 @@ class AcceptMemberHandler(BaseHandler):
         notify["groupid"] = groupid
         notify["groupname"] = result.get("name", "")
         notify["userid"] = inviteid
-        opter_info = yield mickey.userfetcher.getcontact(inviteid)
+        opter_info = yield mickey.userfetcher.getcontact(inviteid, token)
         if opter_info:
             notify["username"] = opter_info.get("name", "")
         else:

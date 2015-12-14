@@ -12,12 +12,14 @@ from bson.objectid import ObjectId
 import mickey.userfetcher
 from mickey.basehandler import BaseHandler
 import mickey.commonconf
+import mickey.tp
 
 class DisplayGroupHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
         coll = self.application.db.groups
+        token = self.request.headers.get("Authorization", "")
         chatcoll = self.application.db.tbchats
         usercoll = self.application.userdb.users
         data = json.loads(self.request.body.decode("utf-8"))
@@ -44,6 +46,12 @@ class DisplayGroupHandler(BaseHandler):
         result = yield coll.find_one({"_id":ObjectId(groupid)})
 
         if result:
+            #check tp chat id
+            tp_chatid = result.get('tp_chatid', None)
+            if not tp_chatid:
+                owner = result.get('owner', '')
+                mickey.tp.addgroup(groupid, owner, "", True)
+
             #set new expire
             expire_set = result.get('expireAt', None)
             if expire_set:
@@ -65,7 +73,7 @@ class DisplayGroupHandler(BaseHandler):
                 u_member["remark"] = item.get("remark", "")
                 
                 # get user information
-                c_info = yield mickey.userfetcher.getcontact(u_id)
+                c_info = yield mickey.userfetcher.getcontact(u_id, token)
 
                 if not c_info:
                     logging.error("get user info failed %s" % u_id)
@@ -86,7 +94,7 @@ class DisplayGroupHandler(BaseHandler):
                 u_appending["remark"] = item.get("remark", "")
 
                 # get user information
-                c_info = yield mickey.userfetcher.getcontact(u_id)
+                c_info = yield mickey.userfetcher.getcontact(u_id, token)
                 if not c_info:
                     logging.error("get user info failed %s" % u_id)
                     continue

@@ -19,6 +19,7 @@ class AuthAddMemberHandler(BaseHandler):
     def post(self):
         coll = self.application.db.groups
         publish = self.application.publish
+        token = self.request.headers.get("Authorization", "")
         data = json.loads(self.request.body.decode("utf-8"))
         groupid = data.get("groupid", "")
         members = data.get("members", [])
@@ -75,7 +76,7 @@ class AuthAddMemberHandler(BaseHandler):
             notify["groupid"] = groupid
             notify["groupname"] = result.get("name", "")
             notify["userid"] = self.p_userid
-            opter_info = yield mickey.userfetcher.getcontact(self.p_userid)
+            opter_info = yield mickey.userfetcher.getcontact(self.p_userid, token)
             if opter_info:
                 notify["username"] = opter_info.get("name", "")
             else:
@@ -105,7 +106,7 @@ class AuthAddMemberHandler(BaseHandler):
             notify["groupid"] = groupid
             notify["groupname"] = result.get("name", "")
             notify["userid"] = self.p_userid
-            opter_info = yield mickey.userfetcher.getcontact(self.p_userid)
+            opter_info = yield mickey.userfetcher.getcontact(self.p_userid, token)
             if opter_info:
                 notify["username"] = opter_info.get("name", "")
                 notify["usernickname"] = opter_info.get("commName", "")
@@ -116,7 +117,7 @@ class AuthAddMemberHandler(BaseHandler):
             for item in add_members:
                 member = {}
                 member["id"] = item
-                user_info = yield mickey.userfetcher.getcontact(item)
+                user_info = yield mickey.userfetcher.getcontact(item, token)
                 if user_info:
                     member["name"] = user_info.get("name", "")
                     member["nickname"] = user_info.get("commName", "")
