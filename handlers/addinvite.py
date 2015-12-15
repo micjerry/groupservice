@@ -9,12 +9,16 @@ import motor
 from bson.objectid import ObjectId
 
 from mickey.basehandler import BaseHandler
+import mickey.users
+import mickey.groups
+from mickey.commonconf import MAX_MEMBERS
 
 class AddInviteHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
         coll = self.application.db.groups
+        token = self.request.headers.get("Authorization", "")
         data = json.loads(self.request.body.decode("utf-8"))
         groupid = data.get("groupid", "")
         invitees = data.get("invitees", [])
@@ -35,23 +39,52 @@ class AddInviteHandler(BaseHandler):
             return
         else:
             owner = group.get("owner", "")
-            if self.p_userid != owner:
+            if self.p_userid != owner or group.get("invite", "free") != "admin":
+                logging.error("import members was forbidden %s" % groupid)
                 self.set_status(403)
                 self.finish()
                 return
 
-        invitee_numbers = []
-        for item in invitees:
-            number = item.get("number", "")
-            if number:
-                invitee_numbers.append(number)
+            db_invitees = [x.get("number", "") for x in group.get("invitees", [])]
+            invitee_numbers = [x.get("number", "") for x in invitees]
+            
+            all_invitees = list(set(db_invitees + invitee_numbers))
+            members = group.get("members", [])
+            if len(members) + len(all_invitees) > MAX_MEMBERS:
+                logging.error("too many invitees  %s" % groupid)
+                self.set_status(403)
+                self.finish()
+                return
 
-        for load_number in invitee_numbers:
+            if not mickey.groups.charge_sms(self.p_userid, len(invitees)):
+                logging.error("too many sms %s" % groupid)
+                self.set_status(403)
+                self.finish()
+                return
+
+        invitee_numbers = [x.get("number", "") for x in invitees]
+        provisioned_users    = []
+        unprovisioned_users  = []
+
+        for item in invitees:
+            load_number = item.get("number", "")
             result = yield coll.find_and_modify({"_id":ObjectId(groupid)}, {"$pull":{"invitees":{"number":load_number}}})
+            userid = yield mickey.users.get_userwithphone(load_number)
+            if userid:
+                remark = item.get("remark", "")
+                provisioned_users.append({"id":str(userid), "remark":remark})
+            else:
+                unprovisioned_users.append(load_number)
         
         add_result = yield coll.find_and_modify({"_id":ObjectId(groupid)}, {"$addToSet":{"invitees":{"$each": invitees}}})
 
         if add_result:
+            if provisioned_users:
+                mickey.groups.addmember(token, groupid, provisioned_users)
+
+            for item in unprovisioned_users:
+                yield mickey.users.handle_preinvite(item, groupid)
+
             self.set_status(200)
         else:
             logging.error("add invitees failed")

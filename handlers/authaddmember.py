@@ -21,8 +21,9 @@ class AuthAddMemberHandler(BaseHandler):
         publish = self.application.publish
         token = self.request.headers.get("Authorization", "")
         data = json.loads(self.request.body.decode("utf-8"))
-        groupid = data.get("groupid", "")
-        members = data.get("members", [])
+        groupid      = data.get("groupid", "")
+        members      = data.get("members", [])
+        operasadmin  = data.get("operasadmin", "false")
 
         logging.info("begin to add members to group %s" % groupid)
 
@@ -57,7 +58,7 @@ class AuthAddMemberHandler(BaseHandler):
 
         owner = result.get("owner", "")        
 
-        if owner == self.p_userid:
+        if owner == self.p_userid or operasadmin == "true":
             mydevices = yield filter_mydevice(self.p_userid, add_members)
             if mydevices:
                 add_devices = [{"id":x} for x in mydevices]

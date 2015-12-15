@@ -39,15 +39,15 @@ class RemoveGroupHandler(BaseHandler):
             groupname = group.get("name", [])
             owner = group.get("owner", "")
 
-            #remove group from ytx
-            if chatid:
-                mickey.tp.rmvgroup(chatid, owner, "")
-
             if self.p_userid != owner:
                 logging.error("no right")
                 self.set_status(403)
                 self.finish()
                 return
+
+            #remove group from ali
+            if chatid:
+                mickey.tp.rmvgroup(chatid, owner, "")
 
             #update every member delete 
             for item in members:

@@ -18,6 +18,9 @@ _getrealgroups_sql = """
 
 @tornado.gen.coroutine
 def filter_mydevice(userid, members):
+    if not members:
+        return
+
     conn = yield get_mysqlcon('mxsuser')
     if not conn:
         logging.error("connect to mysql failed")
@@ -48,6 +51,9 @@ def filter_mydevice(userid, members):
 
 @tornado.gen.coroutine
 def getreal_groups(userid):
+    if not userid:
+        return 0
+
     conn = yield get_mysqlcon('mxsuser')
     if not conn:
         logging.error("connect to mysql failed")

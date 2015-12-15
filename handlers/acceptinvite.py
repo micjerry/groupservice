@@ -11,6 +11,7 @@ from bson.objectid import ObjectId
 from mickey.basehandler import BaseHandler
 import mickey.tp
 import mickey.maps
+import mickey.users
 
 class AcceptInviteHandler(BaseHandler):
     @tornado.web.asynchronous
@@ -56,6 +57,8 @@ class AcceptInviteHandler(BaseHandler):
             if item.get("id", "") == self.p_userid:
                 remark = item.get("remark", "")
 
+        phone_number = yield mickey.users.get_bindphone(self.p_userid)
+
         #add member
         modresult = yield coll.find_and_modify({"_id":ObjectId(groupid)}, 
                                                {
@@ -63,6 +66,12 @@ class AcceptInviteHandler(BaseHandler):
                                                  "$pull":{"appendings":{"id":self.p_userid}},
                                                  "$unset": {"garbage": 1}
                                                })
+        if phone_number:
+            yield coll.find_and_modify({"_id":ObjectId(groupid)},
+                                       {
+                                         "$pull":{"invitees":{"number":phone_number}},
+                                         "$unset": {"garbage": 1}
+                                       })
 
         user_rst = yield usercoll.find_and_modify({"id":self.p_userid},
                                                   {
