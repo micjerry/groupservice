@@ -12,7 +12,6 @@ from bson.objectid import ObjectId
 import mickey.userfetcher
 from mickey.basehandler import BaseHandler
 import mickey.commonconf
-import mickey.tp
 
 class DisplayGroupHandler(BaseHandler):
     @tornado.web.asynchronous
@@ -46,12 +45,6 @@ class DisplayGroupHandler(BaseHandler):
         result = yield coll.find_one({"_id":ObjectId(groupid)})
 
         if result:
-            #check tp chat id
-            tp_chatid = result.get('tp_chatid', None)
-            if not tp_chatid:
-                owner = result.get('owner', '')
-                mickey.tp.addgroup(groupid, owner, "", True)
-
             #set new expire
             expire_set = result.get('expireAt', None)
             if expire_set:
