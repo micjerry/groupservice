@@ -15,7 +15,6 @@ class AcceptMultimemberHandler(BaseHandler):
     @tornado.gen.coroutine
     def post(self):
         coll = self.application.db.groups
-        publish = self.application.publish
         token = self.request.headers.get("Authorization", "")
         data = json.loads(self.request.body.decode("utf-8"))
         groupid = data.get("groupid", "")
@@ -32,6 +31,18 @@ class AcceptMultimemberHandler(BaseHandler):
             self.set_status(403)
             self.finish()
             return
+
+        strip_members = []
+        repeat_members = []
+        for item in members:
+            str_key = item.get("invite_id", "") + "_" + item.get("id", "") 
+            if str_key in repeat_members:
+                continue
+
+            repeat_members.append(str_key)
+            strip_members.append(item)
+
+        members = strip_members
         
         result = yield coll.find_one({"_id":ObjectId(groupid)})
 
@@ -93,6 +104,7 @@ class AcceptMultimemberHandler(BaseHandler):
 
     @tornado.gen.coroutine
     def send_notify(self, inviteid, members):
+        publish = self.application.publish
         notify = {}
         notify["name"] = "mx.group.authgroup_invited"
         notify["pub_type"] = "any"
