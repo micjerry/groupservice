@@ -58,12 +58,18 @@ class DisplayGroupHandler(BaseHandler):
             groupinfo = {}
             groupinfo["groupid"] = groupid
             rs_members = []
+            auth_type = result.get("invite", "free")
 
             for item in result.get("members", []):
                 u_member = {}
                 u_id = item.get("id", "")
                 u_member["id"] = u_id
-                u_member["remark"] = item.get("remark", "")
+                if auth_type == "admin":
+                    u_member["remark"] = item.get("remark", "")
+                    u_member["gnick"] = ""
+                else:
+                    u_member["gnick"] = item.get("remark", "")
+                    u_member["remark"] = item.get("remark", "")
                 
                 # get user information
                 c_info = yield mickey.userfetcher.getcontact(u_id, token)
@@ -84,7 +90,12 @@ class DisplayGroupHandler(BaseHandler):
                 u_appending = {}
                 u_id = item.get("id", "")
                 u_appending["id"] = u_id
-                u_appending["remark"] = item.get("remark", "")
+                if auth_type == "admin":
+                    u_appending["remark"] = item.get("remark", "")
+                    u_appending["gnick"] = ""
+                else:
+                    u_appending["remark"] = item.get("remark", "")
+                    u_appending["gnick"] = item.get("remark", "")
 
                 # get user information
                 c_info = yield mickey.userfetcher.getcontact(u_id, token)

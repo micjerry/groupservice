@@ -34,14 +34,14 @@ class UserAddGroupHandler(BaseHandler):
         
         result = yield coll.find_and_modify({"id":userid}, 
                                             {
-                                              "$push":{"groups":{"id":groupid}},
+                                              "$addToSet":{"groups":{"id":groupid}},
                                               "$unset": {"garbage": 1}
                                             })
 
         #update group savers, if someone save this group, set it not expire
         grp_result = yield groupcoll.find_and_modify({"_id":ObjectId(groupid)},
                                                 {
-                                                  "$push":{"savers":self.p_userid},
+                                                  "$addToSet":{"savers":self.p_userid},
                                                   "$unset": {"garbage": 1, "expireAt": 1}
                                                 })
         if result:

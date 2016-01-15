@@ -101,6 +101,7 @@ class AddGroupHandler(BaseHandler):
                 for item in added_members:
                     yield usercoll.find_and_modify({"id":item}, 
                                                    {
+                                                     "$push":{"groups":{"id": groupid}},
                                                      "$push":{"realgroups":groupid},
                                                      "$unset": {"garbage": 1}
                                                    })
