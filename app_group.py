@@ -34,6 +34,7 @@ from handlers.acceptmember import AcceptMemberHandler
 from handlers.acceptinvite import AcceptInviteHandler
 from handlers.rejectinvite import RejectInviteHandler
 from handlers.acceptmembermulti import AcceptMultimemberHandler
+from handlers.provisioncheck import ProvisionCheckHandler
 
 from tornado.options import define, options
 define("port", default=8100, help="run on the given port", type=int)
@@ -59,7 +60,8 @@ class Application(tornado.web.Application):
                   (r"/group/accept/invitation", AcceptInviteHandler),
                   (r"/group/reject/invitation", RejectInviteHandler),
                   (r"/group/approve/newmember", AcceptMemberHandler),
-                  (r"/group/approve/multinewmember", AcceptMultimemberHandler)
+                  (r"/group/approve/multinewmember", AcceptMultimemberHandler),
+                  (r"/group/provision/check", ProvisionCheckHandler)
                  ]
         self.db = motor.MotorClient(options.mongo_url).group
         self.userdb = motor.MotorClient(options.mongo_url).contact

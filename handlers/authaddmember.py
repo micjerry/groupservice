@@ -47,7 +47,7 @@ class AuthAddMemberHandler(BaseHandler):
         #get exist members
         exist_ids = [x.get("id", "") for x in result.get("members", [])]
 
-        if not self.p_userid in exist_ids:
+        if operasadmin == "false" and not self.p_userid in exist_ids:
             logging.error("%s are not the member" % self.p_userid)
             self.set_status(403)
             self.finish()
@@ -56,9 +56,11 @@ class AuthAddMemberHandler(BaseHandler):
         # get members and the receivers
         add_members = list(filter(lambda x: x not in exist_ids, [x.get("id", "") for x in members]))
 
-        owner = result.get("owner", "")        
+        owner = result.get("owner", "")
+        if operasadmin == "true":
+            self.p_userid = owner
 
-        if owner == self.p_userid or operasadmin == "true":
+        if owner == self.p_userid:
             mydevices = yield filter_mydevice(self.p_userid, add_members)
             if mydevices:
                 add_devices = [{"id":x} for x in mydevices]
