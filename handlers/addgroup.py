@@ -60,7 +60,7 @@ class AddGroupHandler(BaseHandler):
 
         if invite == "admin":
             realgroups = yield getreal_groups(self.p_userid)
-            if ((realgroups + 1) > MAX_REALGROUPS) or (len(members) > MAX_REALGROUPS):
+            if ((realgroups + 1) > MAX_REALGROUPS) or (len(members) > MAX_MEMBERS):
                 self.set_status(413)
                 self.finish()
                 return

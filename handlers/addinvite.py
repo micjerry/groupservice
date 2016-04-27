@@ -11,6 +11,8 @@ from bson.objectid import ObjectId
 from mickey.basehandler import BaseHandler
 import mickey.users
 import mickey.groups
+import mickey.smsinter
+import mickey.userfetcher
 from mickey.commonconf import MAX_MEMBERS
 
 class AddInviteHandler(BaseHandler):
@@ -22,6 +24,7 @@ class AddInviteHandler(BaseHandler):
         data = json.loads(self.request.body.decode("utf-8"))
         groupid = data.get("groupid", "")
         invitees = data.get("invitees", [])
+        admin_name = None
 
         logging.info("begin to add invitees to group %s" % groupid)
 
@@ -82,8 +85,16 @@ class AddInviteHandler(BaseHandler):
             if provisioned_users:
                 mickey.groups.addmember(token, groupid, provisioned_users)
 
+            opter_info = yield mickey.userfetcher.getcontact(self.p_userid, token)
+            if opter_info:
+                admin_name = opter_info.get("name", "")
+
+            group_name = group.get("name", "")
+
             for item in unprovisioned_users:
                 yield mickey.users.handle_preinvite(item, groupid)
+                if len(item) == 11 and admin_name and group_name:
+                     mickey.smsinter.sendSMS(91550640, item, admin = admin_name, group = group_name)
 
             self.set_status(200)
         else:
