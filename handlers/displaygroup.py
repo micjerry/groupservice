@@ -81,6 +81,7 @@ class DisplayGroupHandler(BaseHandler):
                 u_member["nickname"] = c_info.get("commName", "")
                 u_member["name"] = c_info.get("name", "")
                 u_member["type"] = c_info.get("type", "PERSON")
+                u_member["phoneNumber"] = c_info.get("phoneNumber", "")
                 u_member["contactInfos"] = c_info.get("contactInfos", [])
                 
                 rs_members.append(u_member)
@@ -106,6 +107,7 @@ class DisplayGroupHandler(BaseHandler):
                 u_appending["nickname"] = c_info.get("commName", "")
                 u_appending["name"] = c_info.get("name", "")
                 u_appending["type"] = c_info.get("type", "PERSON")
+                u_appending["phoneNumber"] = c_info.get("phoneNumber", "")
                 u_appending["contactInfos"] = c_info.get("contactInfos", [])
                 
                 rs_appendings.append(u_appending)
