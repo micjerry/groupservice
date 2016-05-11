@@ -15,6 +15,7 @@ class UserAddGroupHandler(BaseHandler):
     def post(self):
         coll = self.application.userdb.users
         groupcoll = self.application.db.groups
+        publish = self.application.publish
         data = json.loads(self.request.body.decode("utf-8"))
         userid = data.get("userid", "")
         groupid = data.get("groupid", "")
@@ -46,6 +47,13 @@ class UserAddGroupHandler(BaseHandler):
                                                 })
         if result:
             self.set_status(200)
+            #notify user self
+            notify = {
+             "name":"mx.group.self_group_added",
+             "groupid":groupid
+            }
+            
+            publish.publish_one(userid, notify)
         else:
             logging.error("user add group failed")
             self.set_status(500)

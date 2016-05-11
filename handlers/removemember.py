@@ -87,10 +87,24 @@ class RemoveMemberHandler(BaseHandler):
             notify["userid"] = userid
             if self.p_userid == userid:
                 notify["quit"] = "true"
+                if userid in receivers:
+                    receivers.remove(userid)
             else:
                 notify["quit"] = "false"
 
+
             publish.publish_multi(receivers, notify)
+
+            #notify self
+            if self.p_userid == userid:
+                self_notify = {
+                "name":"mx.group.self_group_quit",
+                "groupid":groupid,
+                "pub_type":"any",
+                "nty_type":"app"
+                }
+
+                publish.publish_one(userid, self_notify)
 
             #remove maps
             mickey.maps.removemembers(groupid, [userid])
