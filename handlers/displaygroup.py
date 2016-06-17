@@ -4,24 +4,18 @@ import tornado.httpclient
 import json
 import io
 import logging
-import datetime
 
 import motor
 
-from bson.objectid import ObjectId
-import mickey.userfetcher
 from mickey.basehandler import BaseHandler
-import mickey.commonconf
+from mickey.groups import GroupMgrMgr
 
 class DisplayGroupHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
-        coll = self.application.db.groups
-        token = self.request.headers.get("Authorization", "")
-        chatcoll = self.application.db.tbchats
-        usercoll = self.application.userdb.users
         data = json.loads(self.request.body.decode("utf-8"))
+        chatcoll = self.application.db.tbchats
         groupid = data.get("groupid", None)
         chatid = data.get("chatid", None)
 
@@ -42,88 +36,15 @@ class DisplayGroupHandler(BaseHandler):
 
             groupid = chat.get('gid', '')
 
-        result = yield coll.find_one({"_id":ObjectId(groupid)})
+        group = yield GroupMgrMgr.getgroup(groupid)
 
-        if result:
-            #set new expire
-            expire_set = result.get('expireAt', None)
-            if expire_set:
-                new_expiredate = datetime.datetime.utcnow() + datetime.timedelta(days = mickey.commonconf.conf_expire_time)
-                modresult = yield coll.find_and_modify({"_id":ObjectId(groupid)},
-                                                       {
-                                                         "$set":{"expireAt": new_expiredate},
-                                                         "$unset": {"garbage": 1}
-                                                       })
-
-            groupinfo = {}
-            groupinfo["groupid"] = groupid
-            rs_members = []
-            auth_type = result.get("invite", "free")
-
-            for item in result.get("members", []):
-                u_member = {}
-                u_id = item.get("id", "")
-                u_member["id"] = u_id
-                if auth_type == "admin":
-                    u_member["remark"] = item.get("remark", "")
-                    u_member["gnick"] = ""
-                else:
-                    u_member["gnick"] = item.get("remark", "")
-                    u_member["remark"] = item.get("remark", "")
-                
-                # get user information
-                c_info = yield mickey.userfetcher.getcontact(u_id, token)
-
-                if not c_info:
-                    logging.error("get user info failed %s" % u_id)
-                    continue
-
-                u_member["nickname"] = c_info.get("commName", "")
-                u_member["name"] = c_info.get("name", "")
-                u_member["type"] = c_info.get("type", "PERSON")
-                u_member["phoneNumber"] = c_info.get("phoneNumber", "")
-                u_member["contactInfos"] = c_info.get("contactInfos", [])
-                
-                rs_members.append(u_member)
-
-            rs_appendings = []
-            for item in result.get("appendings", []):
-                u_appending = {}
-                u_id = item.get("id", "")
-                u_appending["id"] = u_id
-                if auth_type == "admin":
-                    u_appending["remark"] = item.get("remark", "")
-                    u_appending["gnick"] = ""
-                else:
-                    u_appending["remark"] = item.get("remark", "")
-                    u_appending["gnick"] = item.get("remark", "")
-
-                # get user information
-                c_info = yield mickey.userfetcher.getcontact(u_id, token)
-                if not c_info:
-                    logging.error("get user info failed %s" % u_id)
-                    continue
-
-                u_appending["nickname"] = c_info.get("commName", "")
-                u_appending["name"] = c_info.get("name", "")
-                u_appending["type"] = c_info.get("type", "PERSON")
-                u_appending["phoneNumber"] = c_info.get("phoneNumber", "")
-                u_appending["contactInfos"] = c_info.get("contactInfos", [])
-                
-                rs_appendings.append(u_appending)
-
-            groupinfo["members"] = rs_members 
-            groupinfo["invitees"] = result.get("invitees", [])
-            groupinfo["appendings"] = rs_appendings
-           
-            groupinfo["name"] = result.get("name", "")
-            groupinfo["owner"] = result.get("owner", "")
-            groupinfo["vip"] = result.get("vip", "false")
-            groupinfo["vipname"] = result.get("vipname", "")
-            groupinfo["invite"] = result.get("invite", "free")
-            groupinfo["tp_chatid"] = result.get("tp_chatid", "")
-
-            self.write(groupinfo)
+        if group:
+            groupinfo = yield group.createDisplayResponse()
+            if groupinfo:
+                self.write(groupinfo)
+            else:
+                self.set_status(404)
+                self.write({"error":"not found"});
         else:
             logging.error("group %s does not exist" % groupid)
             self.set_status(404)

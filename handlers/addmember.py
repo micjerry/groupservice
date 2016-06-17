@@ -3,22 +3,14 @@ import tornado.gen
 import json
 import io
 import logging
-import datetime
-import motor
 
-from bson.objectid import ObjectId
 from mickey.basehandler import BaseHandler
-import mickey.commonconf
-import mickey.tp
-
-from libgroup import add_groupmembers
+from mickey.groups import GroupMgrMgr, MickeyGroup
 
 class AddMemberHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
-        coll = self.application.db.groups
-        publish = self.application.publish
         data = json.loads(self.request.body.decode("utf-8"))
         groupid = data.get("groupid", "")
         members = data.get("members", [])
@@ -31,48 +23,26 @@ class AddMemberHandler(BaseHandler):
             self.finish()
             return
         
-        result = yield coll.find_one({"_id":ObjectId(groupid)})
+        group = yield GroupMgrMgr.getgroup(groupid)
 
-        if not result:
+        if not group:
             logging.error("group %s does not exist" % groupid)
             self.set_status(404)
             self.finish()
             return
 
-        if result.get("invite", "free") == "admin":
+        if group.is_realname() == True:
             return self.redirect("/group/authadd/members")
 
-        # if add sucess we should send notify to members which already exist
-        old_receivers = [x.get("id", "") for x in result.get("members", [])]
-
-        if not self.p_userid in old_receivers:
+        #check operate right
+        if group.has_member(self.p_userid) == False:
             logging.error("%s are not the member" % self.p_userid)
             self.set_status(403)
             self.finish()
             return
 
+        #add members
+        add_rst = yield group.add_members([x.get("id", "") for x in members])
 
-        # get members and the receivers
-        receivers = list(filter(lambda x: x not in old_receivers, [x.get("id", "") for x in members]))
-        add_members = [{"id":x} for x in receivers]
-        if not add_members:
-            self.finish()
-            return
-
-        new_expiredate = None
-        if result.get('expireAt', None):
-            new_expiredate = datetime.datetime.utcnow() + datetime.timedelta(days = mickey.commonconf.conf_expire_time)
-            
-        result = yield add_groupmembers(coll, publish, groupid, add_members, new_expiredate)
-
-        #add members to openapi chat room
-        for item in receivers:
-            mickey.tp.addgroupmember(groupid, item, "")
-
-        if result:
-            self.set_status(200)
-        else:
-            logging.error("add member failed")
-            self.set_status(500)
-
+        self.set_status(add_rst)
         self.finish()

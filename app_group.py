@@ -17,6 +17,7 @@ import mickey.publish
 import mickey.commonconf
 from mickey.daemon import Daemon
 import mickey.logutil
+from mickey.groups import GroupMgrMgr
 
 from handlers.listgroup import ListGroupHandler
 from handlers.displaygroup import DisplayGroupHandler
@@ -35,6 +36,12 @@ from handlers.acceptinvite import AcceptInviteHandler
 from handlers.rejectinvite import RejectInviteHandler
 from handlers.acceptmembermulti import AcceptMultimemberHandler
 from handlers.provisioncheck import ProvisionCheckHandler
+from handlers.open_querygroup import OpenQueryGroupHandler
+from handlers.open_attachgroup import OpenAttachGroupHandler
+from handlers.open_attach_keepalive import OpenAttachKeepAliveHandler
+from handlers.open_closegroup import OpenCloseGroupHandler
+from handlers.open_disattachgroup import OpenDisAttachGroupHandler
+from handlers.open_opengroup import OpenOpenGroupHandler
 
 from tornado.options import define, options
 define("port", default=8100, help="run on the given port", type=int)
@@ -61,7 +68,13 @@ class Application(tornado.web.Application):
                   (r"/group/reject/invitation", RejectInviteHandler),
                   (r"/group/approve/newmember", AcceptMemberHandler),
                   (r"/group/approve/multinewmember", AcceptMultimemberHandler),
-                  (r"/group/provision/check", ProvisionCheckHandler)
+                  (r"/group/provision/check", ProvisionCheckHandler),
+                  (r"/group/query/withopenid", OpenQueryGroupHandler),
+                  (r"/group/attach/group", OpenAttachGroupHandler),
+                  (r"/group/attach/keepalive", OpenAttachKeepAliveHandler),
+                  (r"/group/disable/attach", OpenCloseGroupHandler),
+                  (r"/group/cancelattach/group", OpenDisAttachGroupHandler),
+                  (r"/group/enable/attach", OpenOpenGroupHandler)
                  ]
         self.db = motor.MotorClient(options.mongo_url).group
         self.userdb = motor.MotorClient(options.mongo_url).contact
@@ -74,7 +87,11 @@ class MickeyDamon(Daemon):
         mickey.logutil.setuplog(options.logfile)
         http_server = tornado.httpserver.HTTPServer(Application())
         http_server.listen(options.port, options.local_server)
-        tornado.ioloop.IOLoop.instance().start()
+        main_loop = tornado.ioloop.IOLoop.instance()
+        interval = 30*1000
+        scheduler = tornado.ioloop.PeriodicCallback(GroupMgrMgr.check_attacher, interval, io_loop = main_loop)
+        scheduler.start()
+        main_loop.start()
 
     def errorcmd(self):
         print("unkown command")

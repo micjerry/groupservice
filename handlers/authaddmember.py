@@ -10,8 +10,9 @@ from bson.objectid import ObjectId
 import mickey.userfetcher
 from mickey.basehandler import BaseHandler
 
+from mickey.groups import GroupMgrMgr, MickeyGroup
+
 from libgroup import filter_mydevice
-from libgroup import add_groupmembers
 
 class AuthAddMemberHandler(BaseHandler):
     @tornado.web.asynchronous
@@ -33,30 +34,31 @@ class AuthAddMemberHandler(BaseHandler):
             self.finish()
             return
         
-        result = yield coll.find_one({"_id":ObjectId(groupid)})
+        group = yield GroupMgrMgr.getgroup(groupid)
 
-        if not result:
+        if not group:
             logging.error("group %s does not exist" % groupid)
             self.set_status(404)
             self.finish()
             return
 
-        if result.get("invite", "free") == "free":
+        if group.is_realname() == False:
             return self.redirect("/group/add/members")
 
         #get exist members
-        exist_ids = [x.get("id", "") for x in result.get("members", [])]
 
-        if operasadmin == "false" and not self.p_userid in exist_ids:
+        if operasadmin == "false" and group.has_member(self.p_userid) == False:
             logging.error("%s are not the member" % self.p_userid)
             self.set_status(403)
             self.finish()
             return
 
-        # get members and the receivers
-        add_members = list(filter(lambda x: x not in exist_ids, [x.get("id", "") for x in members]))
+        group_members = group.get_members()
 
-        owner = result.get("owner", "")
+        # get members and the receivers
+        add_members = list(filter(lambda x: x not in group_members, [x.get("id", "") for x in members]))
+
+        owner = group.get_owner()
         if operasadmin == "true":
             self.p_userid = owner
 
@@ -64,7 +66,7 @@ class AuthAddMemberHandler(BaseHandler):
             mydevices = yield filter_mydevice(self.p_userid, add_members)
             if mydevices:
                 add_devices = [{"id":x} for x in mydevices]
-                yield add_groupmembers(coll, publish, groupid, add_devices, None)
+                yield group.add_members(add_devices)
                 add_members = list(set(add_members) - set(mydevices))
 
             if not add_members:
@@ -77,7 +79,7 @@ class AuthAddMemberHandler(BaseHandler):
             notify["nty_type"] = "device"
             notify["msg_type"] = "other"
             notify["groupid"] = groupid
-            notify["groupname"] = result.get("name", "")
+            notify["groupname"] = group.get_name()
             notify["userid"] = self.p_userid
             opter_info = yield mickey.userfetcher.getcontact(self.p_userid, token)
             if opter_info:
@@ -107,7 +109,7 @@ class AuthAddMemberHandler(BaseHandler):
             notify["nty_type"] = "device"
             notify["msg_type"] = "other"
             notify["groupid"] = groupid
-            notify["groupname"] = result.get("name", "")
+            notify["groupname"] = group.get_name()
             notify["userid"] = self.p_userid
             opter_info = yield mickey.userfetcher.getcontact(self.p_userid, token)
             if opter_info:

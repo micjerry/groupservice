@@ -8,6 +8,7 @@ import motor
 from bson.objectid import ObjectId
 
 from mickey.basehandler import BaseHandler
+from mickey.groups import GroupMgrMgr
 
 class ListGroupHandler(BaseHandler):
     @tornado.web.asynchronous
@@ -41,7 +42,16 @@ class ListGroupHandler(BaseHandler):
                         groupinfo["name"] = group.get("name", "")
                         groupinfo["invite"] = group.get("invite", "")
                         groupinfo["tp_chatid"] = group.get("tp_chatid", "")
+                        groupinfo["open_id"] = group.get("open_id", "")
                         list_groups.append(groupinfo)
+
+            #attach the system group
+            group_ids = [x.get("id", "") for x in groups]
+            public_groups = yield GroupMgrMgr.get_public_groups()
+            for item in public_groups:
+                item_id = item.get("id", "")
+                if not item_id in public_groups:
+                    list_groups.append(item)
                 
             self.write({"groups": list_groups})
         else:
