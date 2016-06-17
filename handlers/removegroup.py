@@ -10,6 +10,7 @@ from mickey.basehandler import BaseHandler
 
 import mickey.tp
 import mickey.maps
+import mickey.userfetcher
 
 class RemoveGroupHandler(BaseHandler):
     @tornado.web.asynchronous
@@ -48,6 +49,10 @@ class RemoveGroupHandler(BaseHandler):
             #remove group from ali
             if chatid:
                 mickey.tp.rmvgroup(chatid, owner, "")
+
+            #remove group from conference
+            conf_users = [x.get("id", "") for x in members]
+            mickey.userfetcher.remove_users_from_conf(groupid, conf_users)
 
             #update every member delete 
             for item in members:

@@ -10,6 +10,7 @@ from bson.objectid import ObjectId
 from mickey.basehandler import BaseHandler
 import mickey.tp
 import mickey.maps
+import mickey.userfetcher
 
 class RemoveMemberHandler(BaseHandler):
     @tornado.web.asynchronous
@@ -71,6 +72,9 @@ class RemoveMemberHandler(BaseHandler):
                                          "$pull":{"realgroups":groupid},
                                          "$unset": {"garbage": 1}
                                        })
+
+        #remove users from conference
+        mickey.userfetcher.remove_users_from_conf(groupid, [userid])
 
         if result:
             self.set_status(200)
