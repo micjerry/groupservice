@@ -48,10 +48,11 @@ class ListGroupHandler(BaseHandler):
             #attach the system group
             group_ids = [x.get("id", "") for x in groups]
             public_groups = yield GroupMgrMgr.get_public_groups()
-            for item in public_groups:
-                item_id = item.get("id", "")
-                if not item_id in public_groups:
-                    list_groups.append(item)
+            if public_groups:
+                for item in public_groups:
+                    item_id = item.get("id", "")
+                    if not item_id in public_groups:
+                        list_groups.append(item)
                 
             self.write({"groups": list_groups})
         else:
