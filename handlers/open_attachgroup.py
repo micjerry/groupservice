@@ -12,16 +12,16 @@ class OpenAttachGroupHandler(BaseHandler):
     @tornado.gen.coroutine
     def post(self):
         data = json.loads(self.request.body.decode("utf-8"))
-        open_id = data.get("open_id", "")
+        groupid = data.get("id", "")
         password = data.get("password", "")
 
-        if not open_id:
-            logging.error("attach failed without openid")
+        if not groupid:
+            logging.error("attach failed without groupid")
             self.set_status(403)
             self.finish()
             return
 
-        group = yield GroupMgrMgr.searchgroup(open_id)
+        group = yield GroupMgrMgr.getgroup(groupid)
         
         if not group:
             self.set_status(404)
