@@ -51,7 +51,7 @@ class ListGroupHandler(BaseHandler):
             if public_groups:
                 for item in public_groups:
                     item_id = item.get("id", "")
-                    if not item_id in public_groups:
+                    if not item_id in group_ids:
                         list_groups.append(item)
                 
             self.write({"groups": list_groups})
