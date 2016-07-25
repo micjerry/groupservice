@@ -65,8 +65,7 @@ class AuthAddMemberHandler(BaseHandler):
         if owner == self.p_userid:
             mydevices = yield filter_mydevice(self.p_userid, add_members)
             if mydevices:
-                add_devices = [{"id":x} for x in mydevices]
-                yield group.add_members(add_devices)
+                yield group.add_members(mydevices)
                 add_members = list(set(add_members) - set(mydevices))
 
             if not add_members:
