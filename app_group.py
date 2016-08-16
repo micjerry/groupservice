@@ -43,6 +43,10 @@ from handlers.open_closegroup import OpenCloseGroupHandler
 from handlers.open_disattachgroup import OpenDisAttachGroupHandler
 from handlers.open_opengroup import OpenOpenGroupHandler
 
+from handlers.id_enable_join import IdEnableJoinHandler
+from handlers.id_disable_join import IdDisableJoinHandler
+from handlers.id_join_group import IdJoinGroupHandler
+
 from tornado.options import define, options
 define("port", default=8100, help="run on the given port", type=int)
 define("cmd", default="run", help="Command")
@@ -74,7 +78,10 @@ class Application(tornado.web.Application):
                   (r"/group/attach/keepalive", OpenAttachKeepAliveHandler),
                   (r"/group/disable/attach", OpenCloseGroupHandler),
                   (r"/group/cancelattach/group", OpenDisAttachGroupHandler),
-                  (r"/group/enable/attach", OpenOpenGroupHandler)
+                  (r"/group/enable/attach", OpenOpenGroupHandler),
+                  (r"/group/id/enable/share", IdEnableJoinHandler),
+                  (r"/group/id/disable/share", IdDisableJoinHandler),
+                  (r"/group/id/join", IdJoinGroupHandler)
                  ]
         self.db = motor.MotorClient(options.mongo_url).group
         self.userdb = motor.MotorClient(options.mongo_url).contact

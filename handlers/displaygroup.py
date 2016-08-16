@@ -16,10 +16,12 @@ class DisplayGroupHandler(BaseHandler):
     def post(self):
         data = json.loads(self.request.body.decode("utf-8"))
         chatcoll = self.application.db.tbchats
+        sharecoll = self.application.db.shareids
         groupid = data.get("groupid", None)
         chatid = data.get("chatid", None)
+        shareid = data.get("shareid", None)
 
-        if not groupid and not chatid:
+        if not groupid and not chatid and not shareid:
             logging.error("invalid parameter")
             self.set_status(403)
             self.finish()
@@ -35,6 +37,15 @@ class DisplayGroupHandler(BaseHandler):
                 return
 
             groupid = chat.get('gid', '')
+
+        if not groupid and shareid:
+            shareinfo = yield sharecoll.find_one({"id": shareid})
+            if not shareinfo:
+                self.set_status(404)
+                self.finish()
+                return
+
+            groupid = shareinfo.get("groupid", "")
 
         group = yield GroupMgrMgr.getgroup(groupid)
 

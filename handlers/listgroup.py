@@ -31,6 +31,10 @@ class ListGroupHandler(BaseHandler):
         if user:
             groups = user.get("groups", [])
 
+            #get group
+            public_groups = yield GroupMgrMgr.get_public_groups()
+            public_group_ids = [x.get("id", "") for x in public_groups]
+
             list_groups = []
             for item in groups:
                 groupid = item.get("id", "")
@@ -43,11 +47,14 @@ class ListGroupHandler(BaseHandler):
                         groupinfo["invite"] = group.get("invite", "")
                         groupinfo["tp_chatid"] = group.get("tp_chatid", "")
                         groupinfo["open_id"] = group.get("open_id", "")
+                        if groupid in public_group_ids:
+                            groupinfo["sys"] = "true"
+
                         list_groups.append(groupinfo)
 
             #attach the system group
             group_ids = [x.get("id", "") for x in groups]
-            public_groups = yield GroupMgrMgr.get_public_groups()
+
             if public_groups:
                 for item in public_groups:
                     item_id = item.get("id", "")

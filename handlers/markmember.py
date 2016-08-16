@@ -46,19 +46,9 @@ class MarkMemberHandler(BaseHandler):
                 self.finish()
                 return
 
-            modresult = None
-            if not result.get('expireAt', None):
-                modresult = yield coll.find_and_modify({"_id": ObjectId(groupid), "members.id": userid},
+            modresult = yield coll.find_and_modify({"_id": ObjectId(groupid), "members.id": userid},
                                                        {
                                                          "$set":{"members.$.remark":remark},
-                                                         "$unset": {"garbage": 1}
-                                                       })
-            else:
-                new_expiredate = datetime.datetime.utcnow() + datetime.timedelta(days = mickey.commonconf.conf_expire_time)
-                modresult = yield coll.find_and_modify({"_id": ObjectId(groupid), "members.id": userid},
-                                                       {
-                                                         "$set":{"members.$.remark":remark},
-                                                         "$set":{"expireAt": new_expiredate},
                                                          "$unset": {"garbage": 1}
                                                        })
             

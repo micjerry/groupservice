@@ -93,8 +93,13 @@ class AddInviteHandler(BaseHandler):
 
             for item in unprovisioned_users:
                 yield mickey.users.handle_preinvite(item, groupid)
-                if len(item) == 11 and admin_name and group_name:
-                     mickey.smsinter.sendSMS(91550640, item, admin = admin_name, group = group_name)
+
+                if admin_name and group_name:
+                    if item[0:4] == "0086":
+                        phone_number = item[4:]
+                        mickey.smsinter.sendSMS(91550640, phone_number, admin = admin_name, group = group_name)
+                    else:
+                        mickey.smsinter.sendSMS(91550640, item, admin = admin_name, group = group_name)
 
             self.set_status(200)
         else:
