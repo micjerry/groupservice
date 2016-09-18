@@ -39,7 +39,9 @@ def filter_mydevice(userid, members):
         rows = cur.fetchall()
         mylist = []
         for item in rows:
-            mylist.append(str(item.get("device_userID", "")))
+            dev_id = str(item.get("device_userID", ""))
+            if not dev_id in mylist:
+                mylist.append(dev_id)
 
         cur.close()
         return mylist
